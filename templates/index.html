@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>419 Scam Baiter Agent</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      background: #1a1d2e;
+      border-bottom: 1px solid #2d3148;
+      flex-shrink: 0;
+    }
+    header h1 { font-size: 1rem; font-weight: 600; color: #a78bfa; letter-spacing: 0.02em; }
+
+    #model-pill { display: flex; align-items: center; gap: 8px; font-size: 0.78rem; color: #94a3b8; }
+    #model-pill strong { color: #c4b5fd; font-weight: 600; }
+
+    #settings-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 5px 12px; background: #252840; border: 1px solid #3d4166;
+      border-radius: 8px; color: #c4b5fd; font-size: 0.78rem; font-weight: 600;
+      cursor: pointer; transition: background 0.15s, border-color 0.15s;
+    }
+    #settings-btn:hover { background: #2e325a; border-color: #a78bfa; }
+
+    /* ── Modal ── */
+    #modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,.65);
+      z-index: 100; align-items: center; justify-content: center;
+    }
+    #modal-overlay.open { display: flex; }
+    #modal {
+      background: #1a1d2e; border: 1px solid #2d3148; border-radius: 14px;
+      padding: 28px; width: min(460px, calc(100vw - 32px));
+      display: flex; flex-direction: column; gap: 18px;
+      box-shadow: 0 24px 60px rgba(0,0,0,.6); max-height: 90vh; overflow-y: auto;
+    }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; }
+    .modal-header h2 { font-size: 1rem; font-weight: 700; }
+    #modal-close { background: none; border: none; color: #64748b; font-size: 1.3rem; cursor: pointer; line-height: 1; }
+    #modal-close:hover { color: #e2e8f0; }
+
+    .section-title {
+      font-size: 0.7rem; font-weight: 700; color: #64748b;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      border-top: 1px solid #2d3148; padding-top: 14px; margin-top: 2px;
+    }
+
+    .tab-row { display: flex; gap: 6px; }
+    .tab {
+      flex: 1; padding: 7px 0; background: #252840; border: 1px solid #3d4166;
+      border-radius: 8px; color: #94a3b8; font-size: 0.8rem; font-weight: 600;
+      cursor: pointer; text-align: center; transition: all 0.15s;
+    }
+    .tab:hover { background: #2e325a; color: #c4b5fd; }
+    .tab.active { background: #3b1f6e; border-color: #a78bfa; color: #e9d5ff; }
+
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field label { font-size: 0.72rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.06em; }
+    .field input, .field select {
+      background: #252840; border: 1px solid #3d4166; border-radius: 8px;
+      color: #e2e8f0; font-size: 0.875rem; padding: 8px 12px; width: 100%;
+    }
+    .field input:focus, .field select:focus { outline: none; border-color: #a78bfa; }
+    .field input::placeholder { color: #4a5568; }
+    .field-hint { font-size: 0.68rem; color: #4a5568; margin-top: 2px; }
+
+    .provider-fields, .real-fields { display: none; flex-direction: column; gap: 14px; }
+    .provider-fields.visible, .real-fields.visible { display: flex; }
+
+    #modal-save {
+      padding: 10px; background: #6d28d9; color: #fff; border: none; border-radius: 9px;
+      font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: background 0.15s;
+    }
+    #modal-save:hover { background: #7c3aed; }
+
+    /* ── Ask prompt ── */
+    #ask-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,.65);
+      z-index: 110; align-items: center; justify-content: center;
+    }
+    #ask-overlay.open { display: flex; }
+    #ask-box {
+      background: #1a1d2e; border: 1px solid #2d3148; border-radius: 14px;
+      padding: 24px; width: min(360px, calc(100vw - 32px));
+      display: flex; flex-direction: column; gap: 16px; text-align: center;
+    }
+    #ask-box p { font-size: 0.9rem; color: #cbd5e1; }
+    .ask-actions { display: flex; gap: 10px; }
+    .ask-actions button { flex: 1; }
+    #ask-real { background: #0f4c75; color: #bae6fd; }
+    #ask-fake { background: #6d28d9; color: #fff; }
+
+    /* ── Layout: sidebar + chat ── */
+    #app-body { flex: 1; display: flex; overflow: hidden; }
+
+    #sidebar {
+      width: 240px; flex-shrink: 0; background: #14162350; border-right: 1px solid #2d3148;
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .sidebar-head {
+      padding: 12px 14px; display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid #2d3148;
+    }
+    .sidebar-head span { font-size: 0.72rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.06em; }
+    #new-thread-btn {
+      background: #252840; border: 1px solid #3d4166; color: #c4b5fd;
+      border-radius: 6px; padding: 3px 9px; font-size: 0.72rem; cursor: pointer;
+    }
+    #new-thread-btn:hover { background: #2e325a; }
+    #thread-list { flex: 1; overflow-y: auto; padding: 6px; display: flex; flex-direction: column; gap: 4px; }
+    #thread-list:empty::after {
+      content: "No threads yet"; color: #4a5568; font-size: 0.78rem; text-align: center; margin-top: 20px;
+    }
+    .thread-item {
+      padding: 8px 10px; border-radius: 8px; cursor: pointer; border: 1px solid transparent;
+      transition: background 0.12s;
+    }
+    .thread-item:hover { background: #1e2130; }
+    .thread-item.active { background: #241f3d; border-color: #6d28d9; }
+    .thread-item .t-subject { font-size: 0.8rem; color: #cbd5e1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .thread-item .t-meta { font-size: 0.66rem; color: #64748b; margin-top: 2px; }
+    .t-mode { display: inline-block; padding: 0 5px; border-radius: 5px; font-weight: 600; }
+    .t-mode.fake { background: #3b1f6e; color: #d8b4fe; }
+    .t-mode.real { background: #0f4c75; color: #bae6fd; }
+
+    #chat-col { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    #chat-inner { flex: 1; display: flex; flex-direction: column; overflow: hidden; max-width: 860px; width: 100%; margin: 0 auto; padding: 0 16px; }
+
+    /* personas panel */
+    #personas-panel {
+      display: none; flex-wrap: wrap; gap: 6px; padding: 10px 0 4px;
+      border-bottom: 1px solid #2d3148;
+    }
+    #personas-panel.visible { display: flex; }
+    .persona-card {
+      display: flex; align-items: center; gap: 6px; font-size: 0.7rem;
+      background: #1a2e1a; border: 1px solid #14532d; color: #86efac;
+      padding: 3px 9px; border-radius: 12px;
+    }
+    .persona-card.victim { background: #1d2b4a; border-color: #2d4570; color: #93c5fd; }
+    .persona-card .p-role { font-weight: 700; text-transform: capitalize; }
+
+    #chat-window { flex: 1; overflow-y: auto; padding: 16px 0; display: flex; flex-direction: column; gap: 12px; }
+    #chat-window:empty::after {
+      content: "Paste a scam email below and hit Send to watch the agent reply.";
+      display: block; text-align: center; color: #4a5568; margin-top: 80px; font-size: 0.9rem;
+    }
+
+    .bubble-row { display: flex; flex-direction: column; gap: 4px; }
+    .bubble-row.scammer { align-items: flex-start; }
+    .bubble-row.agent { align-items: flex-end; }
+    .bubble-label { font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; padding: 0 12px; }
+    .bubble { max-width: 78%; padding: 10px 14px; border-radius: 16px; font-size: 0.875rem; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+    .bubble-row.scammer .bubble { background: #1e2130; border: 1px solid #2d3557; border-top-left-radius: 4px; color: #f87171; }
+    .bubble-row.agent .bubble { background: #1d2b4a; border: 1px solid #2d4570; border-top-right-radius: 4px; color: #93c5fd; }
+
+    .tool-chips { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 12px; }
+    .chip { display: inline-flex; align-items: center; gap: 4px; font-size: 0.68rem; padding: 2px 8px; border-radius: 12px; font-family: monospace; }
+    .chip.intent { background: #312e1a; color: #fbbf24; border: 1px solid #78350f; }
+    .chip.identity { background: #1a2e1a; color: #4ade80; border: 1px solid #14532d; }
+    .chip.character { background: #2e1a2e; color: #f0abfc; border: 1px solid #701a75; }
+    .chip.other { background: #1e1a2e; color: #c4b5fd; border: 1px solid #3b1f6e; }
+
+    .badge-banking { display: inline-block; font-size: 0.65rem; padding: 2px 7px; border-radius: 10px; background: #7f1d1d; color: #fca5a5; margin-left: 6px; vertical-align: middle; }
+
+    #input-area { flex-shrink: 0; padding: 12px 0 16px; display: flex; flex-direction: column; gap: 8px; }
+    textarea {
+      width: 100%; min-height: 90px; resize: vertical; background: #1a1d2e;
+      border: 1px solid #2d3148; border-radius: 10px; color: #e2e8f0;
+      font-size: 0.875rem; padding: 10px 14px; font-family: inherit; line-height: 1.5;
+    }
+    textarea:focus { outline: none; border-color: #a78bfa; }
+    .action-row { display: flex; gap: 8px; justify-content: flex-end; }
+    button { padding: 8px 20px; border: none; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+    #send-btn { background: #6d28d9; color: #fff; }
+    #send-btn:hover:not(:disabled) { background: #7c3aed; }
+    #process-btn { background: #0f4c75; color: #bae6fd; }
+    #process-btn:hover:not(:disabled) { background: #1b5e8a; }
+
+    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid transparent; border-top-color: currentColor; border-radius: 50%; animation: spin 0.7s linear infinite; margin-right: 6px; vertical-align: middle; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .status-bar { font-size: 0.72rem; color: #4a5568; text-align: right; min-height: 16px; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>419 Scam Baiter Agent</h1>
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div id="model-pill">Using <strong id="active-label">—</strong></div>
+      <button id="settings-btn">⚙ Settings</button>
+    </div>
+  </header>
+
+  <!-- ── Settings modal ── -->
+  <div id="modal-overlay" role="dialog" aria-modal="true">
+    <div id="modal">
+      <div class="modal-header">
+        <h2>Settings</h2>
+        <button id="modal-close" aria-label="Close">✕</button>
+      </div>
+
+      <!-- Provider -->
+      <div class="section-title" style="border-top:none;padding-top:0;margin-top:0;">Provider &amp; Model</div>
+      <div class="tab-row" id="provider-tabs">
+        <button class="tab" data-provider="claude">Claude</button>
+        <button class="tab" data-provider="openai">OpenAI</button>
+        <button class="tab" data-provider="ollama">Ollama</button>
+      </div>
+      <div class="field">
+        <label for="modal-model">Model</label>
+        <select id="modal-model"></select>
+      </div>
+      <div class="provider-fields" id="fields-claude">
+        <div class="field">
+          <label for="key-claude">Anthropic API Key</label>
+          <input id="key-claude" type="password" placeholder="sk-ant-…  (blank = server .env)">
+          <span class="field-hint">Stored in browser localStorage only.</span>
+        </div>
+      </div>
+      <div class="provider-fields" id="fields-openai">
+        <div class="field">
+          <label for="key-openai">OpenAI API Key</label>
+          <input id="key-openai" type="password" placeholder="sk-…  (blank = server .env)">
+          <span class="field-hint">Stored in browser localStorage only.</span>
+        </div>
+      </div>
+      <div class="provider-fields" id="fields-ollama">
+        <div class="field">
+          <label for="ollama-url">Ollama Base URL</label>
+          <input id="ollama-url" type="text" placeholder="http://localhost:11434">
+        </div>
+      </div>
+
+      <!-- Identity -->
+      <div class="section-title">Identity</div>
+      <div class="tab-row" id="identity-tabs">
+        <button class="tab" data-mode="real">Real</button>
+        <button class="tab" data-mode="fake">Fake</button>
+        <button class="tab" data-mode="ask">Ask</button>
+      </div>
+      <div class="field">
+        <label for="modal-locale">Locale (for generated personas)</label>
+        <select id="modal-locale"></select>
+      </div>
+      <div class="real-fields" id="real-fields">
+        <div class="field">
+          <label for="user-name">Your name</label>
+          <input id="user-name" type="text" placeholder="(optional — used only in Real mode)">
+        </div>
+        <div class="field">
+          <label for="user-email">Your email</label>
+          <input id="user-email" type="text" placeholder="(optional)">
+          <span class="field-hint">Real mode never fabricates financial details.</span>
+        </div>
+      </div>
+
+      <button id="modal-save">Save &amp; Close</button>
+    </div>
+  </div>
+
+  <!-- ── Ask prompt ── -->
+  <div id="ask-overlay" role="dialog" aria-modal="true">
+    <div id="ask-box">
+      <p>Starting a new thread — use a <strong>real</strong> or <strong>fake</strong> identity?</p>
+      <div class="ask-actions">
+        <button id="ask-real">Real</button>
+        <button id="ask-fake">Fake</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Body ── -->
+  <div id="app-body">
+    <aside id="sidebar">
+      <div class="sidebar-head">
+        <span>Threads</span>
+        <button id="new-thread-btn">+ New</button>
+      </div>
+      <div id="thread-list"></div>
+    </aside>
+
+    <div id="chat-col">
+      <div id="chat-inner">
+        <div id="personas-panel"></div>
+        <div id="chat-window"></div>
+        <div id="input-area">
+          <textarea id="message-input" placeholder="Paste a scam email here…"></textarea>
+          <div class="action-row">
+            <button id="process-btn">Process Gmail</button>
+            <button id="send-btn">Send to Agent</button>
+          </div>
+          <div class="status-bar" id="status-bar"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'scambaiter_settings';
+
+    let cfg = {
+      providers: {}, model_labels: {},
+      default_provider: 'claude', default_model: 'claude-haiku-4-5',
+      identity_modes: ['real','fake','ask'], identity_locales: ['en_US'],
+      default_identity_mode: 'fake', default_locale: 'en_US',
+    };
+
+    let settings = {
+      provider: '', model: '',
+      keys: { claude: '', openai: '' }, ollama_url: '',
+      identity_mode: '', locale: '', user_name: '', user_email: '',
+    };
+
+    let currentThreadId = null;
+    let pendingSend = null;   // used by the ask-mode chooser
+
+    // DOM
+    const chatWindow   = document.getElementById('chat-window');
+    const messageInput = document.getElementById('message-input');
+    const sendBtn      = document.getElementById('send-btn');
+    const processBtn   = document.getElementById('process-btn');
+    const statusBar    = document.getElementById('status-bar');
+    const activeLabel  = document.getElementById('active-label');
+    const settingsBtn  = document.getElementById('settings-btn');
+    const modalOverlay = document.getElementById('modal-overlay');
+    const modalClose   = document.getElementById('modal-close');
+    const modalSave    = document.getElementById('modal-save');
+    const modalModel   = document.getElementById('modal-model');
+    const modalLocale  = document.getElementById('modal-locale');
+    const providerTabs = document.querySelectorAll('#provider-tabs .tab');
+    const identityTabs = document.querySelectorAll('#identity-tabs .tab');
+    const realFields   = document.getElementById('real-fields');
+    const threadList   = document.getElementById('thread-list');
+    const personasPanel= document.getElementById('personas-panel');
+    const newThreadBtn = document.getElementById('new-thread-btn');
+    const askOverlay   = document.getElementById('ask-overlay');
+
+    // localStorage
+    function loadSettings() {
+      try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) Object.assign(settings, JSON.parse(raw)); } catch (_) {}
+    }
+    function saveSettings() { localStorage.setItem(STORAGE_KEY, JSON.stringify(settings)); }
+
+    // ── Modal ──
+    function openModal() {
+      selectProviderTab(settings.provider || cfg.default_provider);
+      selectIdentityTab(settings.identity_mode || cfg.default_identity_mode);
+      // locale options
+      modalLocale.innerHTML = '';
+      for (const l of cfg.identity_locales) {
+        const o = document.createElement('option'); o.value = l; o.textContent = l; modalLocale.appendChild(o);
+      }
+      modalLocale.value = settings.locale || cfg.default_locale;
+      document.getElementById('user-name').value = settings.user_name || '';
+      document.getElementById('user-email').value = settings.user_email || '';
+      modalOverlay.classList.add('open');
+    }
+    function closeModal() { modalOverlay.classList.remove('open'); }
+
+    settingsBtn.addEventListener('click', openModal);
+    modalClose.addEventListener('click', closeModal);
+    modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) closeModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); askOverlay.classList.remove('open'); } });
+
+    modalSave.addEventListener('click', () => {
+      settings.provider = document.querySelector('#provider-tabs .tab.active')?.dataset.provider || cfg.default_provider;
+      settings.model = modalModel.value;
+      settings.keys.claude = document.getElementById('key-claude').value.trim();
+      settings.keys.openai = document.getElementById('key-openai').value.trim();
+      settings.ollama_url = document.getElementById('ollama-url').value.trim();
+      settings.identity_mode = document.querySelector('#identity-tabs .tab.active')?.dataset.mode || cfg.default_identity_mode;
+      settings.locale = modalLocale.value;
+      settings.user_name = document.getElementById('user-name').value.trim();
+      settings.user_email = document.getElementById('user-email').value.trim();
+      saveSettings();
+      updateActivePill();
+      closeModal();
+    });
+
+    function selectProviderTab(provider) {
+      providerTabs.forEach(t => t.classList.toggle('active', t.dataset.provider === provider));
+      document.querySelectorAll('.provider-fields').forEach(el => el.classList.remove('visible'));
+      document.getElementById('fields-' + provider)?.classList.add('visible');
+      const models = cfg.providers[provider] || [];
+      modalModel.innerHTML = '';
+      for (const m of models) {
+        const o = document.createElement('option'); o.value = m; o.textContent = cfg.model_labels[m] || m; modalModel.appendChild(o);
+      }
+      modalModel.value = models.includes(settings.model) ? settings.model : (models[0] || '');
+      document.getElementById('key-claude').value = settings.keys.claude || '';
+      document.getElementById('key-openai').value = settings.keys.openai || '';
+      document.getElementById('ollama-url').value = settings.ollama_url || '';
+    }
+    providerTabs.forEach(t => t.addEventListener('click', () => selectProviderTab(t.dataset.provider)));
+
+    function selectIdentityTab(mode) {
+      identityTabs.forEach(t => t.classList.toggle('active', t.dataset.mode === mode));
+      realFields.classList.toggle('visible', mode === 'real');
+    }
+    identityTabs.forEach(t => t.addEventListener('click', () => selectIdentityTab(t.dataset.mode)));
+
+    function updateActivePill() {
+      const p = settings.provider || cfg.default_provider;
+      const m = settings.model || cfg.default_model;
+      const mode = settings.identity_mode || cfg.default_identity_mode;
+      activeLabel.textContent = `${p} / ${cfg.model_labels[m] || m} · ${mode}`;
+    }
+
+    // ── Config ──
+    async function loadConfig() {
+      try {
+        const res = await fetch('/config');
+        cfg = await res.json();
+        if (!settings.provider) settings.provider = cfg.default_provider;
+        if (!settings.model) settings.model = cfg.default_model;
+        if (!settings.identity_mode) settings.identity_mode = cfg.default_identity_mode;
+        if (!settings.locale) settings.locale = cfg.default_locale;
+        updateActivePill();
+      } catch (e) { setStatus('Failed to load config: ' + e.message, true); }
+    }
+
+    // ── Chat rendering ──
+    function appendBubble(role, text, meta) {
+      const row = document.createElement('div');
+      row.className = `bubble-row ${role}`;
+      const label = document.createElement('div');
+      label.className = 'bubble-label';
+      label.textContent = role === 'scammer' ? 'Scammer' : 'Agent';
+      if (role === 'agent' && meta?.banking_intent) {
+        const badge = document.createElement('span');
+        badge.className = 'badge-banking'; badge.textContent = 'Banking intent';
+        label.appendChild(badge);
+      }
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble'; bubble.textContent = text;
+      row.appendChild(label); row.appendChild(bubble);
+
+      if (role === 'agent' && meta?.tools_called?.length) {
+        const chips = document.createElement('div');
+        chips.className = 'tool-chips';
+        for (const t of meta.tools_called) {
+          const chip = document.createElement('span');
+          chip.className = 'chip ' + (
+            t.name === 'detect_banking_intent' ? 'intent' :
+            t.name === 'get_fake_identity'     ? 'identity' :
+            t.name === 'generate_character'    ? 'character' : 'other'
+          );
+          chip.textContent = '⚙ ' + t.name;
+          chips.appendChild(chip);
+        }
+        row.appendChild(chips);
+      }
+      if (role === 'agent' && meta?.characters_created?.length) {
+        const chips = document.createElement('div');
+        chips.className = 'tool-chips';
+        for (const c of meta.characters_created) {
+          const chip = document.createElement('span');
+          chip.className = 'chip character';
+          chip.textContent = `🎭 ${c.role}: ${c.name}`;
+          chips.appendChild(chip);
+        }
+        row.appendChild(chips);
+      }
+      chatWindow.appendChild(row);
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    function renderPersonas(personas) {
+      personasPanel.innerHTML = '';
+      if (!personas || !personas.length) { personasPanel.classList.remove('visible'); return; }
+      for (const p of personas) {
+        const card = document.createElement('div');
+        card.className = 'persona-card' + (p.role === 'victim' ? ' victim' : '');
+        card.innerHTML = `<span class="p-role">${p.role || 'persona'}</span> ${p.name || '(unnamed)'}`;
+        personasPanel.appendChild(card);
+      }
+      personasPanel.classList.add('visible');
+    }
+
+    function setStatus(msg, error = false) { statusBar.textContent = msg; statusBar.style.color = error ? '#f87171' : '#4a5568'; }
+    function setBusy(busy) {
+      sendBtn.disabled = busy; processBtn.disabled = busy;
+      sendBtn.innerHTML = busy ? '<span class="spinner"></span>Thinking…' : 'Send to Agent';
+    }
+
+    // ── Threads sidebar ──
+    async function refreshThreads() {
+      try {
+        const res = await fetch('/threads');
+        const threads = await res.json();
+        threadList.innerHTML = '';
+        for (const t of threads) {
+          const item = document.createElement('div');
+          item.className = 'thread-item' + (t.id === currentThreadId ? ' active' : '');
+          item.innerHTML =
+            `<div class="t-subject">${t.subject || '(no subject)'}</div>` +
+            `<div class="t-meta"><span class="t-mode ${t.identity_mode}">${t.identity_mode}</span> · ${t.message_count} msg</div>`;
+          item.addEventListener('click', () => loadThread(t.id));
+          threadList.appendChild(item);
+        }
+      } catch (_) {}
+    }
+
+    async function loadThread(id) {
+      try {
+        const res = await fetch('/threads/' + id);
+        if (!res.ok) throw new Error('not found');
+        const data = await res.json();
+        currentThreadId = id;
+        chatWindow.innerHTML = '';
+        for (const m of data.messages) {
+          appendBubble(m.direction === 'incoming' ? 'scammer' : 'agent', m.body);
+        }
+        renderPersonas(data.personas);
+        refreshThreads();
+        setStatus(`Loaded thread #${id} (${data.messages.length} messages)`);
+      } catch (e) { setStatus('Could not load thread: ' + e.message, true); }
+    }
+
+    newThreadBtn.addEventListener('click', () => {
+      currentThreadId = null;
+      chatWindow.innerHTML = '';
+      renderPersonas([]);
+      refreshThreads();
+      setStatus('New thread — send a message to begin.');
+    });
+
+    // ── Send flow ──
+    function doSend(resolvedMode) {
+      const text = pendingSend;
+      pendingSend = null;
+      const provider = settings.provider || cfg.default_provider;
+      const model    = settings.model || cfg.default_model;
+
+      const body = {
+        message: text, provider, model,
+        thread_id: currentThreadId,
+        identity_mode: resolvedMode,
+        locale: settings.locale || cfg.default_locale,
+        user_name: settings.user_name || '',
+        user_email: settings.user_email || '',
+      };
+      if (provider === 'claude' && settings.keys.claude) body.api_key = settings.keys.claude;
+      if (provider === 'openai' && settings.keys.openai) body.api_key = settings.keys.openai;
+      if (provider === 'ollama' && settings.ollama_url) body.ollama_url = settings.ollama_url;
+
+      appendBubble('scammer', text);
+      setBusy(true);
+      setStatus('Agent is thinking…');
+
+      fetch('/chat', {
+        method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body),
+      })
+      .then(async res => {
+        if (!res.ok) { const err = await res.json(); throw new Error(err.detail || res.statusText); }
+        return res.json();
+      })
+      .then(data => {
+        currentThreadId = data.thread_id;
+        appendBubble('agent', data.reply, data);
+        if (data.primary_persona) renderPersonas([data.primary_persona]);
+        // refresh personas fully (side characters may have been added)
+        fetch('/threads/' + data.thread_id).then(r => r.json()).then(d => renderPersonas(d.personas)).catch(()=>{});
+        refreshThreads();
+        const modelLabel = cfg.model_labels[data.model] || data.model;
+        const extra = data.characters_created?.length ? ` · +${data.characters_created.length} character(s)` : '';
+        setStatus(`${data.provider} / ${modelLabel} · ${data.tools_called.length} tool(s)${extra}`);
+      })
+      .catch(e => setStatus('Error: ' + e.message, true))
+      .finally(() => setBusy(false));
+    }
+
+    sendBtn.addEventListener('click', () => {
+      const text = messageInput.value.trim();
+      if (!text) return;
+      messageInput.value = '';
+      pendingSend = text;
+
+      const mode = settings.identity_mode || cfg.default_identity_mode;
+      // Ask only when starting a NEW thread in ask mode
+      if (currentThreadId === null && mode === 'ask') {
+        askOverlay.classList.add('open');
+      } else {
+        doSend(mode === 'ask' ? 'fake' : mode);
+      }
+    });
+
+    document.getElementById('ask-real').addEventListener('click', () => { askOverlay.classList.remove('open'); doSend('real'); });
+    document.getElementById('ask-fake').addEventListener('click', () => { askOverlay.classList.remove('open'); doSend('fake'); });
+
+    messageInput.addEventListener('keydown', e => { if (e.ctrlKey && e.key === 'Enter') sendBtn.click(); });
+
+    // ── Process Gmail ──
+    processBtn.addEventListener('click', async () => {
+      setBusy(true); setStatus('Polling Gmail…');
+      try {
+        const res = await fetch('/process-emails', {method: 'POST'});
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        const count = data.processed?.length ?? 0;
+        setStatus(`Processed ${count} email(s) from Gmail.`);
+        refreshThreads();
+      } catch (e) { setStatus('Gmail error: ' + e.message, true); }
+      finally { setBusy(false); }
+    });
+
+    // ── Init ──
+    loadSettings();
+    loadConfig();
+    refreshThreads();
+  </script>
+</body>
+</html>

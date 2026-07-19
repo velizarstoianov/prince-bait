@@ -1,0 +1,39 @@
+# ── Secrets & credentials (NEVER commit) ──
+.env
+credentials.json
+token.pickle
+*.pickle
+*.pem
+*.key
+
+# ── Database ──
+*.db
+*.sqlite
+*.sqlite3
+
+# ── Python ──
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+.Python
+
+# ── Model weights (large, not source) ──
+models/
+gpt-2/models/
+*.ckpt
+*.h5
+*.pt
+*.bin
+
+# ── OS / editor ──
+.DS_Store
+*.swp
+.idea/
+.vscode/
