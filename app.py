@@ -17,7 +17,7 @@ from agent import database as db
 from agent import crypto, mail_presets
 from agent.mail_provider import get_mail_provider
 
-app = FastAPI(title="419 Scam Baiter Agent")
+app = FastAPI(title="Prince Bait")
 templates = Jinja2Templates(directory="templates")
 
 _DEFAULT_PROVIDER = os.getenv("LLM_PROVIDER", "claude")

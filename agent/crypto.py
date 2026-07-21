@@ -4,7 +4,7 @@ import logging
 
 from cryptography.fernet import Fernet, InvalidToken
 
-logger = logging.getLogger("scambaiter.crypto")
+logger = logging.getLogger("princebait.crypto")
 
 _fernet: Fernet | None = None
 _key_from_env: bool = False
