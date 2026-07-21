@@ -9,5 +9,7 @@ psycopg[binary]>=3.1
 google-api-python-client>=2.120
 google-auth-httplib2>=0.2
 google-auth-oauthlib>=1.2
+cryptography>=43
+msal>=1.31
 jinja2>=3.1
 pydantic>=2.7

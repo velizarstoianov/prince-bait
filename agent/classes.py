@@ -34,7 +34,8 @@ class Identity:
 
 class Mail:
     def __init__(self, from_address="", to_address="", identity_o=None,
-                 subject="", mail_body="", thread_id="", msg_id=""):
+                 subject="", mail_body="", thread_id="", msg_id="",
+                 uid="", folder="INBOX"):
         self.from_address = from_address
         self.identity = identity_o if identity_o is not None else Identity()
         self.to_address = to_address
@@ -42,6 +43,9 @@ class Mail:
         self.mail_body = mail_body
         self.thread_id = thread_id
         self.msg_id = msg_id
+        # IMAP fields (unused by the Gmail API path; defaults keep it backward-compatible)
+        self.uid = uid
+        self.folder = folder
 
 
 class Conversation_Thread:

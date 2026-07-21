@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import String, Text, Integer, DateTime, ForeignKey, func
+from sqlalchemy import String, Text, Integer, Boolean, DateTime, ForeignKey, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -102,3 +102,28 @@ class Message(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     thread: Mapped["Thread"] = relationship(back_populates="messages")
+
+
+class MailAccount(Base):
+    """A configured email account. Secrets are Fernet-encrypted at rest."""
+    __tablename__ = "mail_accounts"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    label: Mapped[str] = mapped_column(String(255), default="")
+    provider_type: Mapped[str] = mapped_column(String(32))  # imap_smtp | gmail_oauth | microsoft_oauth
+    email_address: Mapped[str] = mapped_column(String(255), index=True)
+    auth_kind: Mapped[str] = mapped_column(String(16), default="password")  # password | app_password | oauth
+
+    imap_host: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    imap_port: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    smtp_host: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    smtp_port: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    use_ssl: Mapped[bool] = mapped_column(Boolean, default=True)
+    starttls: Mapped[bool] = mapped_column(Boolean, default=False)
+    username: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+    secret_enc: Mapped[str | None] = mapped_column(Text, nullable=True)       # Fernet(password/app-pw)
+    oauth_token_enc: Mapped[str | None] = mapped_column(Text, nullable=True)  # Fernet(JSON token bundle)
+
+    is_active: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
