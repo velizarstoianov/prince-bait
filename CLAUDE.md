@@ -1,4 +1,4 @@
-# Scam Baiter Agent — Project Guide
+# Prince Bait — Project Guide
 
 An automated **419 scam-baiting agent** (originally a diploma thesis). It engages advance-fee
 email scammers with a believable but perpetually-stalling victim persona to waste their time.
@@ -15,7 +15,7 @@ pip install -r requirements.txt
 cp .env.example .env          # fill in ANTHROPIC_API_KEY (and others as needed)
 ANTHROPIC_API_KEY=... python -m uvicorn app:app --port 8000 --reload
 ```
-Open http://127.0.0.1:8000. DB (`scambaiter.db`) auto-creates on startup.
+Open http://127.0.0.1:8000. DB (`princebait.db`) auto-creates on startup.
 `?thread=N` deep-links a thread.
 
 ## Architecture
@@ -71,7 +71,7 @@ Default: `claude-haiku-4-5` (cheap/fast).
   (`set_tool_context`/`reset_tool_context`), so executor signatures stay `(input_data) -> dict`.
 
 ### Database (SQLAlchemy — light local, scales to prod)
-`DATABASE_URL` env: `sqlite:///scambaiter.db` (default) or `postgresql+psycopg://…` (prod) — same code.
+`DATABASE_URL` env: `sqlite:///princebait.db` (default) or `postgresql+psycopg://…` (prod) — same code.
 - **Thread**: external_thread_id (Gmail, nullable), identity_mode (real|fake), subject, timestamps
 - **Persona**: full Identity fields + role + source (generated|real), FK thread
 - **Participant**: roles/connections — persona_id OR scammer_email + role + connection_type (primary|side_character|contact)
@@ -98,7 +98,7 @@ Single file, no framework. Dark design system (Inter + JetBrains Mono), layered 
 indigo/violet brand, red=scammer / blue=agent bubbles with avatars, typing indicator, thread
 sidebar, personas panel, **Settings modal** (provider tabs + API key fields + identity toggle +
 locale) and **Mail modal** (accounts list with Activate/Test/Delete; add via Preset / Custom
-IMAP/SMTP / SSO buttons). LLM settings persist in `localStorage` (`scambaiter_settings`), sent
+IMAP/SMTP / SSO buttons). LLM settings persist in `localStorage` (`princebait_settings`), sent
 per-request with `.env` fallback. **Mail accounts are server-backed (encrypted DB), never
 localStorage**; password inputs are write-only.
 

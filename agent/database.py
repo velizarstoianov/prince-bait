@@ -8,7 +8,7 @@ from agent.models import Base, Thread, Persona, Participant, Message, MailAccoun
 from agent.classes import Identity
 from agent import crypto
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///scambaiter.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///princebait.db")
 
 _engine = None
 _SessionFactory = None
