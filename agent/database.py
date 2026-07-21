@@ -4,8 +4,9 @@ from contextlib import contextmanager
 from sqlalchemy import create_engine, select, func
 from sqlalchemy.orm import sessionmaker
 
-from agent.models import Base, Thread, Persona, Participant, Message
+from agent.models import Base, Thread, Persona, Participant, Message, MailAccount
 from agent.classes import Identity
+from agent import crypto
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///scambaiter.db")
 
@@ -236,3 +237,114 @@ def get_participants(thread_id: int) -> list[dict]:
             select(Participant).where(Participant.thread_id == thread_id).order_by(Participant.id)
         ).all()
         return [_participant_dict(p) for p in parts]
+
+
+# ── Mail accounts ────────────────────────────────────────────────────────────
+
+_MAIL_PUBLIC_FIELDS = [
+    "id", "label", "provider_type", "email_address", "auth_kind",
+    "imap_host", "imap_port", "smtp_host", "smtp_port", "use_ssl", "starttls",
+    "username", "is_active",
+]
+
+
+def _mail_public_dict(a: MailAccount) -> dict:
+    """Redacted view — safe to return to the client. No secrets, ever."""
+    d = {f: getattr(a, f) for f in _MAIL_PUBLIC_FIELDS}
+    d["has_secret"] = bool(a.secret_enc)
+    d["has_oauth"] = bool(a.oauth_token_enc)
+    d["created_at"] = a.created_at.isoformat() if a.created_at else None
+    return d
+
+
+def _mail_internal_dict(a: MailAccount) -> dict:
+    """Full view with DECRYPTED secrets — for the provider factory only. Never returned by a route."""
+    d = _mail_public_dict(a)
+    d["secret"] = crypto.decrypt(a.secret_enc)
+    d["oauth_token"] = crypto.decrypt(a.oauth_token_enc)  # JSON string or None
+    return d
+
+
+def create_mail_account(*, label="", provider_type, email_address, auth_kind="password",
+                        imap_host=None, imap_port=None, smtp_host=None, smtp_port=None,
+                        use_ssl=True, starttls=False, username=None,
+                        secret=None, oauth_token=None, is_active=False) -> dict:
+    with session_scope() as s:
+        a = MailAccount(
+            label=label or email_address,
+            provider_type=provider_type,
+            email_address=email_address,
+            auth_kind=auth_kind,
+            imap_host=imap_host, imap_port=imap_port,
+            smtp_host=smtp_host, smtp_port=smtp_port,
+            use_ssl=use_ssl, starttls=starttls,
+            username=username or email_address,
+            secret_enc=crypto.encrypt(secret),
+            oauth_token_enc=crypto.encrypt(oauth_token),
+            is_active=is_active,
+        )
+        if is_active:
+            for other in s.scalars(select(MailAccount).where(MailAccount.is_active == True)).all():  # noqa: E712
+                other.is_active = False
+        s.add(a)
+        s.flush()
+        return _mail_public_dict(a)
+
+
+def list_mail_accounts() -> list[dict]:
+    with session_scope() as s:
+        rows = s.scalars(select(MailAccount).order_by(MailAccount.id.desc())).all()
+        return [_mail_public_dict(a) for a in rows]
+
+
+def get_mail_account(account_id: int, *, internal: bool = False) -> dict | None:
+    with session_scope() as s:
+        a = s.get(MailAccount, account_id)
+        if a is None:
+            return None
+        return _mail_internal_dict(a) if internal else _mail_public_dict(a)
+
+
+def update_mail_account(account_id: int, *, secret=None, oauth_token=None, **fields) -> dict | None:
+    with session_scope() as s:
+        a = s.get(MailAccount, account_id)
+        if a is None:
+            return None
+        for k, v in fields.items():
+            if hasattr(a, k):
+                setattr(a, k, v)
+        if secret is not None:
+            a.secret_enc = crypto.encrypt(secret)
+        if oauth_token is not None:
+            a.oauth_token_enc = crypto.encrypt(oauth_token)
+        s.flush()
+        return _mail_public_dict(a)
+
+
+def delete_mail_account(account_id: int) -> bool:
+    with session_scope() as s:
+        a = s.get(MailAccount, account_id)
+        if a is None:
+            return False
+        s.delete(a)
+        return True
+
+
+def set_active_mail_account(account_id: int) -> dict | None:
+    with session_scope() as s:
+        target = s.get(MailAccount, account_id)
+        if target is None:
+            return None
+        for a in s.scalars(select(MailAccount).where(MailAccount.is_active == True)).all():  # noqa: E712
+            a.is_active = False
+        target.is_active = True
+        s.flush()
+        return _mail_public_dict(target)
+
+
+def get_active_mail_account(*, internal: bool = False) -> dict | None:
+    with session_scope() as s:
+        a = s.scalar(select(MailAccount).where(MailAccount.is_active == True))  # noqa: E712
+        if a is None:
+            return None
+        return _mail_internal_dict(a) if internal else _mail_public_dict(a)

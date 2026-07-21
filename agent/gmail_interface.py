@@ -76,9 +76,16 @@ def _build_mail(message_in_thread: dict) -> Mail:
     return obj
 
 
-def get_last_mails_unread() -> list[Mail]:
+def _svc(service=None):
+    """Return an injected Gmail service, or build one from the legacy env/token.pickle flow."""
+    if service is not None:
+        return service
     creds = authorize()
-    service = build("gmail", "v1", credentials=creds)
+    return build("gmail", "v1", credentials=creds)
+
+
+def get_last_mails_unread(service=None) -> list[Mail]:
+    service = _svc(service)
     threads = service.users().threads().list(userId=GMAIL_USER_ID).execute().get("threads", [])
     last_mails = []
     for thread in threads:
@@ -129,9 +136,8 @@ def get_mailbox_unread() -> list[Conversation_Thread]:
     return mailbox
 
 
-def reply_to_mail(reply_text: str, mail_to_reply: Mail):
-    creds = authorize()
-    service = build("gmail", "v1", credentials=creds)
+def reply_to_mail(reply_text: str, mail_to_reply: Mail, service=None):
+    service = _svc(service)
     message = MIMEMultipart()
     message["to"] = mail_to_reply.from_address
     message["from"] = mail_to_reply.to_address
@@ -156,12 +162,11 @@ def remove_mail_label(thread_id: str, remove: str = "UNREAD", user_id: str = GMA
     ).execute()
 
 
-def add_mail_label(thread_id: str, add: str = "READ", user_id: str = GMAIL_USER_ID):
+def add_mail_label(thread_id: str, add: str = "READ", user_id: str = GMAIL_USER_ID, service=None):
     # BUG FIX: original used undefined 'remove', called wrong authorize(), used removeLabelIds
     if add not in ("UNREAD", "READ"):
         return
-    creds = authorize()
-    service = build("gmail", "v1", credentials=creds)
+    service = _svc(service)
     service.users().messages().modify(
         userId=user_id, id=thread_id, body={"addLabelIds": [add]}
     ).execute()

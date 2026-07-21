@@ -3,223 +3,485 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>419 Scam Baiter Agent</title>
+  <title>Scam Baiter — Agent Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
   <style>
+    :root {
+      /* Surfaces — layered depth */
+      --bg-0: #0a0b12;      /* app background */
+      --bg-1: #10121d;      /* panels */
+      --bg-2: #161a29;      /* cards, inputs */
+      --bg-3: #1e2336;      /* raised / hover */
+      --bg-glass: rgba(16, 18, 29, 0.72);
+
+      /* Borders */
+      --border: #232842;
+      --border-soft: #1b2036;
+      --border-strong: #2f3658;
+
+      /* Ink */
+      --ink-0: #f1f4fb;     /* primary text */
+      --ink-1: #a9b2cf;     /* secondary */
+      --ink-2: #6b7699;     /* muted */
+      --ink-3: #454e6d;     /* faint / placeholder */
+
+      /* Brand — indigo→violet */
+      --brand: #7c6cf6;
+      --brand-bright: #9a8cff;
+      --brand-dim: #4a3fb0;
+      --brand-glow: rgba(124, 108, 246, 0.35);
+
+      /* Roles */
+      --scam: #f97066;      /* scammer / adversary */
+      --scam-bg: #1f1517;
+      --scam-border: #4a2422;
+      --agent: #5eb3ff;     /* our operative */
+      --agent-bg: #101a2b;
+      --agent-border: #24406b;
+
+      /* Status accents */
+      --amber: #f6c651;
+      --green: #4ade80;
+      --pink: #e879f9;
+
+      --radius: 14px;
+      --radius-sm: 9px;
+      --shadow-lg: 0 24px 70px -12px rgba(0,0,0,0.7);
+      --shadow-glow: 0 0 0 1px var(--border-strong), 0 8px 30px -8px var(--brand-glow);
+    }
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    html, body { height: 100%; }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: #0f1117;
-      color: #e2e8f0;
-      height: 100vh;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(1200px 600px at 80% -10%, rgba(124,108,246,0.10), transparent 60%),
+        radial-gradient(900px 500px at 0% 110%, rgba(94,179,255,0.06), transparent 55%),
+        var(--bg-0);
+      color: var(--ink-0);
       display: flex;
       flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+      overflow: hidden;
     }
+
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 10px; border: 2px solid transparent; background-clip: padding-box; }
+    ::-webkit-scrollbar-thumb:hover { background: #3a4267; background-clip: padding-box; }
+    ::-webkit-scrollbar-track { background: transparent; }
 
     /* ── Header ── */
     header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 20px;
-      background: #1a1d2e;
-      border-bottom: 1px solid #2d3148;
-      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 22px; flex-shrink: 0;
+      background: var(--bg-glass);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border-soft);
+      position: relative; z-index: 20;
     }
-    header h1 { font-size: 1rem; font-weight: 600; color: #a78bfa; letter-spacing: 0.02em; }
-
-    #model-pill { display: flex; align-items: center; gap: 8px; font-size: 0.78rem; color: #94a3b8; }
-    #model-pill strong { color: #c4b5fd; font-weight: 600; }
-
-    #settings-btn {
-      display: flex; align-items: center; gap: 6px;
-      padding: 5px 12px; background: #252840; border: 1px solid #3d4166;
-      border-radius: 8px; color: #c4b5fd; font-size: 0.78rem; font-weight: 600;
-      cursor: pointer; transition: background 0.15s, border-color 0.15s;
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-mark {
+      width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--brand-bright), var(--brand-dim));
+      display: grid; place-items: center; font-size: 18px;
+      box-shadow: 0 4px 16px -4px var(--brand-glow), inset 0 1px 0 rgba(255,255,255,0.25);
     }
-    #settings-btn:hover { background: #2e325a; border-color: #a78bfa; }
+    .brand-text h1 { font-size: 0.98rem; font-weight: 700; letter-spacing: -0.01em; line-height: 1.1; }
+    .brand-text .sub { font-size: 0.68rem; color: var(--ink-2); font-weight: 500; letter-spacing: 0.02em; }
 
-    /* ── Modal ── */
-    #modal-overlay {
-      display: none; position: fixed; inset: 0; background: rgba(0,0,0,.65);
-      z-index: 100; align-items: center; justify-content: center;
+    .header-right { display: flex; align-items: center; gap: 14px; }
+    #model-pill {
+      display: flex; align-items: center; gap: 8px; font-size: 0.76rem; color: var(--ink-1);
+      background: var(--bg-2); border: 1px solid var(--border); padding: 6px 12px; border-radius: 999px;
     }
-    #modal-overlay.open { display: flex; }
+    #model-pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); flex-shrink: 0; }
+    #model-pill strong { color: var(--brand-bright); font-weight: 600; }
+
+    #settings-btn, .hdr-btn {
+      display: flex; align-items: center; gap: 7px;
+      padding: 8px 14px; background: var(--bg-2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--ink-0); font-size: 0.78rem; font-weight: 600;
+      cursor: pointer; transition: all 0.18s ease; font-family: inherit;
+    }
+    #settings-btn:hover, .hdr-btn:hover { background: var(--bg-3); border-color: var(--brand); transform: translateY(-1px); }
+    #settings-btn svg, .hdr-btn svg { width: 15px; height: 15px; }
+
+    /* ── Overlays / modals ── */
+    .overlay {
+      position: fixed; inset: 0; z-index: 100;
+      background: rgba(5,6,12,0.72); backdrop-filter: blur(4px);
+      display: none; align-items: center; justify-content: center;
+      animation: fade 0.2s ease;
+    }
+    .overlay.open { display: flex; }
+    @keyframes fade { from { opacity: 0; } }
+    @keyframes pop { from { opacity: 0; transform: translateY(10px) scale(0.98); } }
+
     #modal {
-      background: #1a1d2e; border: 1px solid #2d3148; border-radius: 14px;
-      padding: 28px; width: min(460px, calc(100vw - 32px));
+      background: linear-gradient(180deg, var(--bg-2), var(--bg-1));
+      border: 1px solid var(--border-strong); border-radius: 18px;
+      padding: 26px; width: min(470px, calc(100vw - 32px));
       display: flex; flex-direction: column; gap: 18px;
-      box-shadow: 0 24px 60px rgba(0,0,0,.6); max-height: 90vh; overflow-y: auto;
+      box-shadow: var(--shadow-lg); max-height: 90vh; overflow-y: auto;
+      animation: pop 0.25s cubic-bezier(.2,.8,.2,1);
     }
     .modal-header { display: flex; align-items: center; justify-content: space-between; }
-    .modal-header h2 { font-size: 1rem; font-weight: 700; }
-    #modal-close { background: none; border: none; color: #64748b; font-size: 1.3rem; cursor: pointer; line-height: 1; }
-    #modal-close:hover { color: #e2e8f0; }
+    .modal-header h2 { font-size: 1.05rem; font-weight: 700; letter-spacing: -0.01em; }
+    #modal-close {
+      background: var(--bg-3); border: 1px solid var(--border); color: var(--ink-1);
+      width: 30px; height: 30px; border-radius: 8px; font-size: 1rem; cursor: pointer; line-height: 1;
+      display: grid; place-items: center; transition: all 0.15s;
+    }
+    #modal-close:hover { color: var(--ink-0); background: var(--scam-bg); border-color: var(--scam-border); }
 
     .section-title {
-      font-size: 0.7rem; font-weight: 700; color: #64748b;
-      text-transform: uppercase; letter-spacing: 0.08em;
-      border-top: 1px solid #2d3148; padding-top: 14px; margin-top: 2px;
+      font-size: 0.68rem; font-weight: 700; color: var(--ink-2);
+      text-transform: uppercase; letter-spacing: 0.1em;
+      display: flex; align-items: center; gap: 10px;
     }
+    .section-title::after { content: ""; flex: 1; height: 1px; background: var(--border); }
 
-    .tab-row { display: flex; gap: 6px; }
+    .tab-row { display: flex; gap: 6px; background: var(--bg-1); padding: 4px; border-radius: 11px; border: 1px solid var(--border-soft); }
     .tab {
-      flex: 1; padding: 7px 0; background: #252840; border: 1px solid #3d4166;
-      border-radius: 8px; color: #94a3b8; font-size: 0.8rem; font-weight: 600;
-      cursor: pointer; text-align: center; transition: all 0.15s;
+      flex: 1; padding: 8px 0; background: transparent; border: none;
+      border-radius: 8px; color: var(--ink-2); font-size: 0.8rem; font-weight: 600;
+      cursor: pointer; text-align: center; transition: all 0.18s; font-family: inherit;
     }
-    .tab:hover { background: #2e325a; color: #c4b5fd; }
-    .tab.active { background: #3b1f6e; border-color: #a78bfa; color: #e9d5ff; }
+    .tab:hover { color: var(--ink-0); }
+    .tab.active {
+      background: linear-gradient(135deg, var(--brand), var(--brand-dim));
+      color: #fff; box-shadow: 0 4px 14px -4px var(--brand-glow);
+    }
 
-    .field { display: flex; flex-direction: column; gap: 5px; }
-    .field label { font-size: 0.72rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.06em; }
-    .field input, .field select {
-      background: #252840; border: 1px solid #3d4166; border-radius: 8px;
-      color: #e2e8f0; font-size: 0.875rem; padding: 8px 12px; width: 100%;
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label { font-size: 0.7rem; font-weight: 600; color: var(--ink-1); text-transform: uppercase; letter-spacing: 0.06em; }
+    .field input, .field select, textarea {
+      background: var(--bg-1); border: 1px solid var(--border); border-radius: var(--radius-sm);
+      color: var(--ink-0); font-size: 0.875rem; padding: 10px 12px; width: 100%;
+      font-family: inherit; transition: border-color 0.15s, box-shadow 0.15s;
     }
-    .field input:focus, .field select:focus { outline: none; border-color: #a78bfa; }
-    .field input::placeholder { color: #4a5568; }
-    .field-hint { font-size: 0.68rem; color: #4a5568; margin-top: 2px; }
+    .field input:focus, .field select:focus, textarea:focus {
+      outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-glow);
+    }
+    .field input::placeholder, textarea::placeholder { color: var(--ink-3); }
+    .field-hint { font-size: 0.68rem; color: var(--ink-2); }
 
     .provider-fields, .real-fields { display: none; flex-direction: column; gap: 14px; }
     .provider-fields.visible, .real-fields.visible { display: flex; }
 
-    #modal-save {
-      padding: 10px; background: #6d28d9; color: #fff; border: none; border-radius: 9px;
-      font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: background 0.15s;
+    .btn-primary {
+      padding: 11px; background: linear-gradient(135deg, var(--brand-bright), var(--brand));
+      color: #fff; border: none; border-radius: var(--radius-sm);
+      font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.18s; font-family: inherit;
+      box-shadow: 0 6px 20px -6px var(--brand-glow);
     }
-    #modal-save:hover { background: #7c3aed; }
+    .btn-primary:hover { filter: brightness(1.08); transform: translateY(-1px); }
 
     /* ── Ask prompt ── */
-    #ask-overlay {
-      display: none; position: fixed; inset: 0; background: rgba(0,0,0,.65);
-      z-index: 110; align-items: center; justify-content: center;
-    }
-    #ask-overlay.open { display: flex; }
     #ask-box {
-      background: #1a1d2e; border: 1px solid #2d3148; border-radius: 14px;
-      padding: 24px; width: min(360px, calc(100vw - 32px));
-      display: flex; flex-direction: column; gap: 16px; text-align: center;
+      background: linear-gradient(180deg, var(--bg-2), var(--bg-1));
+      border: 1px solid var(--border-strong); border-radius: 18px;
+      padding: 28px; width: min(380px, calc(100vw - 32px));
+      display: flex; flex-direction: column; gap: 20px; text-align: center;
+      box-shadow: var(--shadow-lg); animation: pop 0.25s cubic-bezier(.2,.8,.2,1);
     }
-    #ask-box p { font-size: 0.9rem; color: #cbd5e1; }
+    #ask-box .ask-icon { font-size: 30px; }
+    #ask-box p { font-size: 0.92rem; color: var(--ink-1); line-height: 1.5; }
+    #ask-box strong { color: var(--ink-0); }
     .ask-actions { display: flex; gap: 10px; }
-    .ask-actions button { flex: 1; }
-    #ask-real { background: #0f4c75; color: #bae6fd; }
-    #ask-fake { background: #6d28d9; color: #fff; }
+    .ask-actions button { flex: 1; padding: 11px; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 700; cursor: pointer; border: 1px solid; transition: all 0.15s; font-family: inherit; }
+    #ask-real { background: var(--agent-bg); color: var(--agent); border-color: var(--agent-border); }
+    #ask-real:hover { background: #142338; }
+    #ask-fake { background: linear-gradient(135deg, var(--brand), var(--brand-dim)); color: #fff; border-color: transparent; }
+    #ask-fake:hover { filter: brightness(1.1); }
 
-    /* ── Layout: sidebar + chat ── */
-    #app-body { flex: 1; display: flex; overflow: hidden; }
+    /* ── Body layout ── */
+    #app-body { flex: 1; display: flex; overflow: hidden; min-height: 0; }
 
+    /* Sidebar */
     #sidebar {
-      width: 240px; flex-shrink: 0; background: #14162350; border-right: 1px solid #2d3148;
+      width: 264px; flex-shrink: 0; background: var(--bg-1);
+      border-right: 1px solid var(--border-soft);
       display: flex; flex-direction: column; overflow: hidden;
     }
     .sidebar-head {
-      padding: 12px 14px; display: flex; align-items: center; justify-content: space-between;
-      border-bottom: 1px solid #2d3148;
+      padding: 16px 16px 12px; display: flex; align-items: center; justify-content: space-between;
     }
-    .sidebar-head span { font-size: 0.72rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.06em; }
+    .sidebar-head span { font-size: 0.68rem; font-weight: 700; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.1em; }
     #new-thread-btn {
-      background: #252840; border: 1px solid #3d4166; color: #c4b5fd;
-      border-radius: 6px; padding: 3px 9px; font-size: 0.72rem; cursor: pointer;
+      display: flex; align-items: center; gap: 5px;
+      background: var(--bg-3); border: 1px solid var(--border); color: var(--brand-bright);
+      border-radius: 8px; padding: 5px 11px; font-size: 0.72rem; font-weight: 600; cursor: pointer;
+      transition: all 0.15s; font-family: inherit;
     }
-    #new-thread-btn:hover { background: #2e325a; }
-    #thread-list { flex: 1; overflow-y: auto; padding: 6px; display: flex; flex-direction: column; gap: 4px; }
+    #new-thread-btn:hover { background: var(--brand-dim); color: #fff; border-color: var(--brand); }
+
+    #thread-list { flex: 1; overflow-y: auto; padding: 4px 8px 12px; display: flex; flex-direction: column; gap: 3px; }
     #thread-list:empty::after {
-      content: "No threads yet"; color: #4a5568; font-size: 0.78rem; text-align: center; margin-top: 20px;
+      content: "No threads yet"; color: var(--ink-3); font-size: 0.78rem; text-align: center; margin-top: 24px; font-style: italic;
     }
     .thread-item {
-      padding: 8px 10px; border-radius: 8px; cursor: pointer; border: 1px solid transparent;
-      transition: background 0.12s;
+      padding: 10px 12px; border-radius: 10px; cursor: pointer;
+      border: 1px solid transparent; transition: all 0.14s; position: relative;
     }
-    .thread-item:hover { background: #1e2130; }
-    .thread-item.active { background: #241f3d; border-color: #6d28d9; }
-    .thread-item .t-subject { font-size: 0.8rem; color: #cbd5e1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .thread-item .t-meta { font-size: 0.66rem; color: #64748b; margin-top: 2px; }
-    .t-mode { display: inline-block; padding: 0 5px; border-radius: 5px; font-weight: 600; }
-    .t-mode.fake { background: #3b1f6e; color: #d8b4fe; }
-    .t-mode.real { background: #0f4c75; color: #bae6fd; }
+    .thread-item:hover { background: var(--bg-2); }
+    .thread-item.active { background: var(--bg-2); border-color: var(--border-strong); }
+    .thread-item.active::before {
+      content: ""; position: absolute; left: 0; top: 10px; bottom: 10px; width: 3px;
+      background: linear-gradient(var(--brand-bright), var(--brand)); border-radius: 3px;
+    }
+    .thread-item .t-subject { font-size: 0.82rem; color: var(--ink-0); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .thread-item .t-meta { font-size: 0.66rem; color: var(--ink-2); margin-top: 4px; display: flex; align-items: center; gap: 6px; }
+    .t-mode { display: inline-flex; align-items: center; padding: 1px 7px; border-radius: 6px; font-weight: 700; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    .t-mode.fake { background: rgba(124,108,246,0.15); color: var(--brand-bright); }
+    .t-mode.real { background: rgba(94,179,255,0.13); color: var(--agent); }
 
-    #chat-col { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-    #chat-inner { flex: 1; display: flex; flex-direction: column; overflow: hidden; max-width: 860px; width: 100%; margin: 0 auto; padding: 0 16px; }
+    /* Chat column */
+    #chat-col { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+    #chat-inner { flex: 1; display: flex; flex-direction: column; overflow: hidden; max-width: 880px; width: 100%; margin: 0 auto; padding: 0 20px; min-height: 0; }
 
-    /* personas panel */
+    /* Personas panel */
     #personas-panel {
-      display: none; flex-wrap: wrap; gap: 6px; padding: 10px 0 4px;
-      border-bottom: 1px solid #2d3148;
+      display: none; flex-wrap: wrap; gap: 7px; padding: 14px 0 12px;
+      border-bottom: 1px solid var(--border-soft);
     }
     #personas-panel.visible { display: flex; }
     .persona-card {
-      display: flex; align-items: center; gap: 6px; font-size: 0.7rem;
-      background: #1a2e1a; border: 1px solid #14532d; color: #86efac;
-      padding: 3px 9px; border-radius: 12px;
+      display: flex; align-items: center; gap: 7px; font-size: 0.72rem;
+      background: var(--bg-2); border: 1px solid var(--border); color: var(--ink-1);
+      padding: 5px 11px 5px 7px; border-radius: 999px;
     }
-    .persona-card.victim { background: #1d2b4a; border-color: #2d4570; color: #93c5fd; }
-    .persona-card .p-role { font-weight: 700; text-transform: capitalize; }
+    .persona-card .p-avatar {
+      width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center;
+      font-size: 0.62rem; font-weight: 700; color: #fff; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--green), #2f855a);
+    }
+    .persona-card.victim .p-avatar { background: linear-gradient(135deg, var(--agent), #2563eb); }
+    .persona-card .p-role { font-weight: 700; text-transform: capitalize; color: var(--ink-0); }
 
-    #chat-window { flex: 1; overflow-y: auto; padding: 16px 0; display: flex; flex-direction: column; gap: 12px; }
+    /* Chat window */
+    #chat-window { flex: 1; overflow-y: auto; padding: 22px 4px; display: flex; flex-direction: column; gap: 18px; }
     #chat-window:empty::after {
-      content: "Paste a scam email below and hit Send to watch the agent reply.";
-      display: block; text-align: center; color: #4a5568; margin-top: 80px; font-size: 0.9rem;
+      content: ""; display: block;
+    }
+    .empty-state {
+      margin: auto; text-align: center; max-width: 420px; display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 40px 0;
+    }
+    .empty-state .es-icon {
+      width: 64px; height: 64px; border-radius: 18px;
+      background: linear-gradient(135deg, var(--bg-3), var(--bg-2));
+      border: 1px solid var(--border-strong); display: grid; place-items: center; font-size: 30px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+    }
+    .empty-state h3 { font-size: 1.05rem; font-weight: 700; color: var(--ink-0); }
+    .empty-state p { font-size: 0.86rem; color: var(--ink-2); line-height: 1.6; }
+
+    /* Bubbles */
+    .bubble-row { display: flex; gap: 10px; max-width: 82%; animation: rise 0.28s cubic-bezier(.2,.8,.2,1); }
+    @keyframes rise { from { opacity: 0; transform: translateY(8px); } }
+    .bubble-row.scammer { align-self: flex-start; }
+    .bubble-row.agent { align-self: flex-end; flex-direction: row-reverse; }
+
+    .avatar {
+      width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0; margin-top: 18px;
+      display: grid; place-items: center; font-size: 13px; font-weight: 700;
+    }
+    .scammer .avatar { background: var(--scam-bg); border: 1px solid var(--scam-border); color: var(--scam); }
+    .agent .avatar { background: var(--agent-bg); border: 1px solid var(--agent-border); color: var(--agent); }
+
+    .bubble-col { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+    .agent .bubble-col { align-items: flex-end; }
+
+    .bubble-label { font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); padding: 0 4px; display: flex; align-items: center; }
+    .bubble {
+      padding: 12px 15px; border-radius: 16px; font-size: 0.9rem; line-height: 1.62;
+      white-space: pre-wrap; word-break: break-word;
+    }
+    .scammer .bubble {
+      background: var(--scam-bg); border: 1px solid var(--scam-border);
+      border-top-left-radius: 5px; color: #fca89f;
+    }
+    .agent .bubble {
+      background: linear-gradient(180deg, var(--agent-bg), #0d1626);
+      border: 1px solid var(--agent-border); border-top-right-radius: 5px; color: #bcd9ff;
     }
 
-    .bubble-row { display: flex; flex-direction: column; gap: 4px; }
-    .bubble-row.scammer { align-items: flex-start; }
-    .bubble-row.agent { align-items: flex-end; }
-    .bubble-label { font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; padding: 0 12px; }
-    .bubble { max-width: 78%; padding: 10px 14px; border-radius: 16px; font-size: 0.875rem; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
-    .bubble-row.scammer .bubble { background: #1e2130; border: 1px solid #2d3557; border-top-left-radius: 4px; color: #f87171; }
-    .bubble-row.agent .bubble { background: #1d2b4a; border: 1px solid #2d4570; border-top-right-radius: 4px; color: #93c5fd; }
-
-    .tool-chips { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 12px; }
-    .chip { display: inline-flex; align-items: center; gap: 4px; font-size: 0.68rem; padding: 2px 8px; border-radius: 12px; font-family: monospace; }
-    .chip.intent { background: #312e1a; color: #fbbf24; border: 1px solid #78350f; }
-    .chip.identity { background: #1a2e1a; color: #4ade80; border: 1px solid #14532d; }
-    .chip.character { background: #2e1a2e; color: #f0abfc; border: 1px solid #701a75; }
-    .chip.other { background: #1e1a2e; color: #c4b5fd; border: 1px solid #3b1f6e; }
-
-    .badge-banking { display: inline-block; font-size: 0.65rem; padding: 2px 7px; border-radius: 10px; background: #7f1d1d; color: #fca5a5; margin-left: 6px; vertical-align: middle; }
-
-    #input-area { flex-shrink: 0; padding: 12px 0 16px; display: flex; flex-direction: column; gap: 8px; }
-    textarea {
-      width: 100%; min-height: 90px; resize: vertical; background: #1a1d2e;
-      border: 1px solid #2d3148; border-radius: 10px; color: #e2e8f0;
-      font-size: 0.875rem; padding: 10px 14px; font-family: inherit; line-height: 1.5;
+    .tool-chips { display: flex; flex-wrap: wrap; gap: 5px; padding: 0 4px; }
+    .agent .tool-chips { justify-content: flex-end; }
+    .chip {
+      display: inline-flex; align-items: center; gap: 5px; font-size: 0.68rem; padding: 3px 9px;
+      border-radius: 999px; font-family: 'JetBrains Mono', monospace; font-weight: 500; border: 1px solid;
     }
-    textarea:focus { outline: none; border-color: #a78bfa; }
-    .action-row { display: flex; gap: 8px; justify-content: flex-end; }
-    button { padding: 8px 20px; border: none; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
-    button:disabled { opacity: 0.45; cursor: not-allowed; }
-    #send-btn { background: #6d28d9; color: #fff; }
-    #send-btn:hover:not(:disabled) { background: #7c3aed; }
-    #process-btn { background: #0f4c75; color: #bae6fd; }
-    #process-btn:hover:not(:disabled) { background: #1b5e8a; }
+    .chip.intent { background: rgba(246,198,81,0.1); color: var(--amber); border-color: rgba(246,198,81,0.25); }
+    .chip.identity { background: rgba(74,222,128,0.1); color: var(--green); border-color: rgba(74,222,128,0.25); }
+    .chip.character { background: rgba(232,121,249,0.1); color: var(--pink); border-color: rgba(232,121,249,0.25); }
+    .chip.other { background: rgba(124,108,246,0.1); color: var(--brand-bright); border-color: rgba(124,108,246,0.25); }
 
-    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid transparent; border-top-color: currentColor; border-radius: 50%; animation: spin 0.7s linear infinite; margin-right: 6px; vertical-align: middle; }
+    .badge-banking {
+      display: inline-flex; align-items: center; gap: 4px; font-size: 0.62rem; font-weight: 700;
+      padding: 2px 8px; border-radius: 999px; background: rgba(249,112,102,0.14);
+      color: var(--scam); margin-left: 8px; letter-spacing: 0.02em;
+    }
+    .badge-banking::before { content: "●"; font-size: 0.5rem; }
+
+    /* Input area */
+    #input-area { flex-shrink: 0; padding: 12px 0 18px; display: flex; flex-direction: column; gap: 10px; }
+    .composer {
+      background: var(--bg-2); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 6px 6px 6px 6px; transition: border-color 0.15s, box-shadow 0.15s;
+      display: flex; flex-direction: column;
+    }
+    .composer:focus-within { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-glow); }
+    .composer textarea {
+      border: none; background: transparent; box-shadow: none !important; resize: none;
+      min-height: 62px; max-height: 200px; padding: 10px 12px 4px;
+    }
+    .composer textarea:focus { border: none; }
+    .action-row { display: flex; gap: 8px; justify-content: space-between; align-items: center; padding: 4px 6px 2px; }
+    .action-left { display: flex; align-items: center; gap: 10px; }
+    .hint-key { font-size: 0.68rem; color: var(--ink-3); }
+    .hint-key kbd { background: var(--bg-3); border: 1px solid var(--border); border-radius: 5px; padding: 1px 5px; font-family: 'JetBrains Mono', monospace; font-size: 0.64rem; color: var(--ink-1); }
+    .action-right { display: flex; gap: 8px; }
+
+    button.btn { padding: 9px 18px; border: none; border-radius: var(--radius-sm); font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: all 0.16s; font-family: inherit; display: inline-flex; align-items: center; gap: 7px; }
+    button.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    #process-btn { background: var(--bg-3); color: var(--agent); border: 1px solid var(--agent-border); }
+    #process-btn:hover:not(:disabled) { background: #142338; }
+    #send-btn { background: linear-gradient(135deg, var(--brand-bright), var(--brand)); color: #fff; box-shadow: 0 6px 18px -8px var(--brand-glow); }
+    #send-btn:hover:not(:disabled) { filter: brightness(1.08); transform: translateY(-1px); }
+
+    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .status-bar { font-size: 0.72rem; color: #4a5568; text-align: right; min-height: 16px; }
+
+    .status-bar { font-size: 0.72rem; color: var(--ink-2); min-height: 16px; padding: 0 4px; display: flex; align-items: center; gap: 6px; }
+    .status-bar.error { color: var(--scam); }
+
+    /* Typing indicator bubble */
+    .typing { display: inline-flex; gap: 4px; padding: 4px 2px; }
+    .typing span { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.5; animation: blink 1.2s infinite; }
+    .typing span:nth-child(2) { animation-delay: 0.2s; }
+    .typing span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes blink { 0%,60%,100% { opacity: 0.25; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-3px); } }
+
+    /* ── Inbox panel ── */
+    #inbox-panel {
+      width: 0; flex-shrink: 0; overflow: hidden;
+      background: var(--bg-1); border-left: 0 solid var(--border-soft);
+      display: flex; flex-direction: column;
+      transition: width 0.25s cubic-bezier(.2,.8,.2,1), border-width 0.25s;
+    }
+    #inbox-panel.open {
+      width: 340px; min-width: 340px; border-left-width: 1px;
+    }
+    /* Keep inner content at fixed width during animation so text doesn't reflow */
+    .inbox-head, #inbox-list, #inbox-preview { min-width: 340px; }
+
+    .inbox-head {
+      padding: 14px 16px 10px; display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid var(--border-soft); flex-shrink: 0;
+    }
+    .inbox-head span { font-size: 0.68rem; font-weight: 700; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.1em; }
+    #inbox-refresh-btn {
+      background: var(--bg-3); border: 1px solid var(--border); color: var(--ink-1);
+      border-radius: 7px; padding: 4px 9px; font-size: 0.7rem; cursor: pointer; font-family: inherit;
+      transition: all 0.15s;
+    }
+    #inbox-refresh-btn:hover { border-color: var(--brand); color: var(--brand-bright); }
+
+    #inbox-list { flex: 1; overflow-y: auto; padding: 6px 8px 12px; display: flex; flex-direction: column; gap: 4px; }
+    #inbox-list:empty::after {
+      content: "No unread messages"; color: var(--ink-3); font-size: 0.78rem;
+      text-align: center; margin-top: 24px; font-style: italic;
+    }
+
+    .inbox-item {
+      padding: 10px 12px; border-radius: 10px; cursor: pointer;
+      border: 1px solid transparent; transition: all 0.14s;
+    }
+    .inbox-item:hover { background: var(--bg-2); }
+    .inbox-item.active { background: var(--bg-2); border-color: var(--border-strong); }
+    .inbox-item .i-from { font-size: 0.78rem; font-weight: 600; color: var(--ink-0); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .inbox-item .i-subject { font-size: 0.72rem; color: var(--ink-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+    .inbox-item .i-snippet { font-size: 0.66rem; color: var(--ink-2); margin-top: 3px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+
+    #inbox-preview {
+      display: none; flex-direction: column; border-top: 1px solid var(--border-soft);
+      max-height: 50%; overflow-y: auto; padding: 12px 14px; gap: 8px; flex-shrink: 0;
+    }
+    #inbox-preview.visible { display: flex; }
+    .preview-header { font-size: 0.72rem; color: var(--ink-1); line-height: 1.5; }
+    .preview-body { font-size: 0.82rem; color: var(--ink-0); line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+    .preview-actions { display: flex; gap: 8px; margin-top: 4px; }
+    #inbox-bait-btn { flex: 1; }
+    #inbox-send-mail-btn { flex: 1; background: linear-gradient(135deg,#4ade80,#16a34a); color: #000; border: none; }
+    #inbox-send-mail-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── Send-by-mail chip on agent bubble ── */
+    .send-mail-chip {
+      display: inline-flex; align-items: center; gap: 5px; font-size: 0.68rem;
+      padding: 3px 10px; border-radius: 999px; cursor: pointer; transition: all 0.15s;
+      background: rgba(74,222,128,0.1); color: #4ade80; border: 1px solid rgba(74,222,128,0.3);
+      font-family: 'JetBrains Mono', monospace; font-weight: 500;
+    }
+    .send-mail-chip:hover { background: rgba(74,222,128,0.2); }
+    .send-mail-chip.sent { background: rgba(74,222,128,0.05); color: var(--ink-2); cursor: default; border-color: var(--border); }
+
+    #inbox-toggle-btn { position: relative; }
+    .inbox-badge {
+      position: absolute; top: -4px; right: -4px; min-width: 16px; height: 16px; padding: 0 4px;
+      background: var(--scam); color: #fff; border-radius: 8px; font-size: 0.58rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; pointer-events: none;
+    }
+
+    @media (max-width: 720px) {
+      #sidebar { position: absolute; z-index: 30; height: 100%; box-shadow: var(--shadow-lg); transform: translateX(-100%); transition: transform 0.25s; }
+      #sidebar.open { transform: none; }
+      .bubble-row { max-width: 92%; }
+      #inbox-panel.open { width: 100%; min-width: unset; position: absolute; right: 0; top: 0; bottom: 0; z-index: 25; }
+    }
   </style>
 </head>
 <body>
 
   <header>
-    <h1>419 Scam Baiter Agent</h1>
-    <div style="display:flex;align-items:center;gap:14px;">
-      <div id="model-pill">Using <strong id="active-label">—</strong></div>
-      <button id="settings-btn">⚙ Settings</button>
+    <div class="brand">
+      <div class="brand-mark">🎣</div>
+      <div class="brand-text">
+        <h1>Scam Baiter</h1>
+        <div class="sub">419 Agent Console</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div id="model-pill"><span class="dot"></span>Using <strong id="active-label">—</strong></div>
+      <button id="mail-btn" class="hdr-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/></svg>
+        Mail
+      </button>
+      <button id="inbox-toggle-btn" class="hdr-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+        Inbox
+        <span id="inbox-badge" class="inbox-badge" style="display:none;">0</span>
+      </button>
+      <button id="settings-btn" class="hdr-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Settings
+      </button>
     </div>
   </header>
 
   <!-- ── Settings modal ── -->
-  <div id="modal-overlay" role="dialog" aria-modal="true">
+  <div id="modal-overlay" class="overlay" role="dialog" aria-modal="true">
     <div id="modal">
       <div class="modal-header">
         <h2>Settings</h2>
         <button id="modal-close" aria-label="Close">✕</button>
       </div>
 
-      <!-- Provider -->
-      <div class="section-title" style="border-top:none;padding-top:0;margin-top:0;">Provider &amp; Model</div>
+      <div class="section-title">Provider &amp; Model</div>
       <div class="tab-row" id="provider-tabs">
         <button class="tab" data-provider="claude">Claude</button>
         <button class="tab" data-provider="openai">OpenAI</button>
@@ -233,14 +495,14 @@
         <div class="field">
           <label for="key-claude">Anthropic API Key</label>
           <input id="key-claude" type="password" placeholder="sk-ant-…  (blank = server .env)">
-          <span class="field-hint">Stored in browser localStorage only.</span>
+          <span class="field-hint">Stored in your browser only — never sent anywhere but the API.</span>
         </div>
       </div>
       <div class="provider-fields" id="fields-openai">
         <div class="field">
           <label for="key-openai">OpenAI API Key</label>
           <input id="key-openai" type="password" placeholder="sk-…  (blank = server .env)">
-          <span class="field-hint">Stored in browser localStorage only.</span>
+          <span class="field-hint">Stored in your browser only.</span>
         </div>
       </div>
       <div class="provider-fields" id="fields-ollama">
@@ -250,7 +512,6 @@
         </div>
       </div>
 
-      <!-- Identity -->
       <div class="section-title">Identity</div>
       <div class="tab-row" id="identity-tabs">
         <button class="tab" data-mode="real">Real</button>
@@ -273,18 +534,84 @@
         </div>
       </div>
 
-      <button id="modal-save">Save &amp; Close</button>
+      <button id="modal-save" class="btn-primary">Save &amp; Close</button>
     </div>
   </div>
 
   <!-- ── Ask prompt ── -->
-  <div id="ask-overlay" role="dialog" aria-modal="true">
+  <div id="ask-overlay" class="overlay" role="dialog" aria-modal="true">
     <div id="ask-box">
-      <p>Starting a new thread — use a <strong>real</strong> or <strong>fake</strong> identity?</p>
+      <div class="ask-icon">🎭</div>
+      <p>Starting a new thread — use a <strong>real</strong> or <strong>fake</strong> identity for this victim persona?</p>
       <div class="ask-actions">
         <button id="ask-real">Real</button>
         <button id="ask-fake">Fake</button>
       </div>
+    </div>
+  </div>
+
+  <!-- ── Mail modal ── -->
+  <div id="mail-overlay" class="overlay" role="dialog" aria-modal="true">
+    <div id="modal" style="width:min(560px,calc(100vw - 32px));">
+      <div class="modal-header">
+        <h2>Mail Connections</h2>
+        <button id="mail-close" aria-label="Close">✕</button>
+      </div>
+
+      <div id="enc-warning" style="display:none;font-size:0.74rem;color:var(--amber);background:rgba(246,198,81,0.1);border:1px solid rgba(246,198,81,0.25);border-radius:9px;padding:9px 12px;">
+        ⚠️ MAIL_ENCRYPTION_KEY is not set — stored credentials won't survive a restart. Set it in <code>.env</code>.
+      </div>
+
+      <div class="section-title">Accounts</div>
+      <div id="mail-accounts-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+
+      <div class="section-title">Add account</div>
+      <div class="tab-row" id="mail-method-tabs">
+        <button class="tab" data-method="preset">Preset</button>
+        <button class="tab" data-method="custom">Custom IMAP/SMTP</button>
+        <button class="tab" data-method="sso">SSO</button>
+      </div>
+
+      <!-- Preset -->
+      <div class="mail-method" id="method-preset">
+        <div class="field">
+          <label for="preset-select">Provider preset</label>
+          <select id="preset-select"></select>
+          <span class="field-hint" id="preset-note"></span>
+        </div>
+      </div>
+
+      <!-- Custom + preset shared IMAP/SMTP fields -->
+      <div class="mail-method" id="method-custom" style="display:none;"></div>
+      <div id="imap-fields" style="display:none;flex-direction:column;gap:12px;">
+        <div class="field"><label>Email address</label><input id="mail-email" type="email" placeholder="you@example.com"></div>
+        <div style="display:flex;gap:10px;">
+          <div class="field" style="flex:2;"><label>IMAP host</label><input id="mail-imap-host" type="text" placeholder="imap.example.com"></div>
+          <div class="field" style="flex:1;"><label>Port</label><input id="mail-imap-port" type="number" value="993"></div>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <div class="field" style="flex:2;"><label>SMTP host</label><input id="mail-smtp-host" type="text" placeholder="smtp.example.com"></div>
+          <div class="field" style="flex:1;"><label>Port</label><input id="mail-smtp-port" type="number" value="465"></div>
+        </div>
+        <div class="field"><label>Username</label><input id="mail-username" type="text" placeholder="(defaults to email)"></div>
+        <div class="field"><label>Password / App password</label><input id="mail-secret" type="password" placeholder="••••••••"><span class="field-hint" id="mail-auth-note"></span></div>
+        <div style="display:flex;gap:16px;font-size:0.8rem;color:var(--ink-1);">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input id="mail-ssl" type="checkbox" checked> Use SSL</label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input id="mail-starttls" type="checkbox"> STARTTLS</label>
+        </div>
+        <button id="mail-save-btn" class="btn-primary">Add &amp; Test</button>
+      </div>
+
+      <!-- SSO -->
+      <div class="mail-method" id="method-sso" style="display:none;">
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <button id="sso-gmail" class="btn-primary" style="background:linear-gradient(135deg,#5eb3ff,#2563eb);">Connect Gmail (Google SSO)</button>
+          <button id="sso-microsoft" class="btn-primary" style="background:linear-gradient(135deg,#3b82f6,#1e40af);">Connect Microsoft (Outlook / M365)</button>
+          <span class="field-hint">Opens a secure sign-in. No password is stored — only OAuth tokens (encrypted).</span>
+        </div>
+      </div>
+
+      <div class="status-bar" id="mail-status"></div>
     </div>
   </div>
 
@@ -293,7 +620,7 @@
     <aside id="sidebar">
       <div class="sidebar-head">
         <span>Threads</span>
-        <button id="new-thread-btn">+ New</button>
+        <button id="new-thread-btn">＋ New</button>
       </div>
       <div id="thread-list"></div>
     </aside>
@@ -303,12 +630,36 @@
         <div id="personas-panel"></div>
         <div id="chat-window"></div>
         <div id="input-area">
-          <textarea id="message-input" placeholder="Paste a scam email here…"></textarea>
-          <div class="action-row">
-            <button id="process-btn">Process Gmail</button>
-            <button id="send-btn">Send to Agent</button>
+          <div class="composer">
+            <textarea id="message-input" placeholder="Paste a scam email here and watch the agent bait them…"></textarea>
+            <div class="action-row">
+              <div class="action-left">
+                <span class="hint-key"><kbd>Ctrl</kbd> + <kbd>Enter</kbd> to send</span>
+              </div>
+              <div class="action-right">
+                <button id="process-btn" class="btn">📥 Process Inbox</button>
+                <button id="send-btn" class="btn">Send</button>
+              </div>
+            </div>
           </div>
           <div class="status-bar" id="status-bar"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inbox side panel -->
+    <div id="inbox-panel">
+      <div class="inbox-head">
+        <span>Inbox — Unread</span>
+        <button id="inbox-refresh-btn">↻ Refresh</button>
+      </div>
+      <div id="inbox-list"></div>
+      <div id="inbox-preview">
+        <div class="preview-header" id="preview-header"></div>
+        <div class="preview-body" id="preview-body"></div>
+        <div class="preview-actions">
+          <button id="inbox-bait-btn" class="btn">🎣 Bait in Chat</button>
+          <button id="inbox-send-mail-btn" class="btn" disabled>✉ Send by Mail</button>
         </div>
       </div>
     </div>
@@ -331,7 +682,8 @@
     };
 
     let currentThreadId = null;
-    let pendingSend = null;   // used by the ask-mode chooser
+    let pendingSend = null;
+    let currentInboxMail = null;  // set when a chat is triggered from an inbox message
 
     // DOM
     const chatWindow   = document.getElementById('chat-window');
@@ -354,6 +706,17 @@
     const newThreadBtn = document.getElementById('new-thread-btn');
     const askOverlay   = document.getElementById('ask-overlay');
 
+    const EMPTY_HTML =
+      '<div class="empty-state">' +
+      '<div class="es-icon">🎣</div>' +
+      '<h3>No conversation yet</h3>' +
+      '<p>Paste a 419 scam email below and hit Send. The agent will detect banking intent, spin up a fake identity, and start wasting their time.</p>' +
+      '</div>';
+
+    function showEmptyIfNeeded() {
+      if (!chatWindow.querySelector('.bubble-row')) chatWindow.innerHTML = EMPTY_HTML;
+    }
+
     // localStorage
     function loadSettings() {
       try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) Object.assign(settings, JSON.parse(raw)); } catch (_) {}
@@ -364,7 +727,6 @@
     function openModal() {
       selectProviderTab(settings.provider || cfg.default_provider);
       selectIdentityTab(settings.identity_mode || cfg.default_identity_mode);
-      // locale options
       modalLocale.innerHTML = '';
       for (const l of cfg.identity_locales) {
         const o = document.createElement('option'); o.value = l; o.textContent = l; modalLocale.appendChild(o);
@@ -422,7 +784,7 @@
       const p = settings.provider || cfg.default_provider;
       const m = settings.model || cfg.default_model;
       const mode = settings.identity_mode || cfg.default_identity_mode;
-      activeLabel.textContent = `${p} / ${cfg.model_labels[m] || m} · ${mode}`;
+      activeLabel.textContent = `${cfg.model_labels[m] || m} · ${mode}`;
     }
 
     // ── Config ──
@@ -439,9 +801,25 @@
     }
 
     // ── Chat rendering ──
+    function chipClass(name) {
+      return name === 'detect_banking_intent' ? 'intent' :
+             name === 'get_fake_identity'     ? 'identity' :
+             name === 'generate_character'    ? 'character' : 'other';
+    }
+
     function appendBubble(role, text, meta) {
+      if (chatWindow.querySelector('.empty-state')) chatWindow.innerHTML = '';
+
       const row = document.createElement('div');
       row.className = `bubble-row ${role}`;
+
+      const avatar = document.createElement('div');
+      avatar.className = 'avatar';
+      avatar.textContent = role === 'scammer' ? '🕵' : '🤖';
+
+      const col = document.createElement('div');
+      col.className = 'bubble-col';
+
       const label = document.createElement('div');
       label.className = 'bubble-label';
       label.textContent = role === 'scammer' ? 'Scammer' : 'Agent';
@@ -450,24 +828,23 @@
         badge.className = 'badge-banking'; badge.textContent = 'Banking intent';
         label.appendChild(badge);
       }
+
       const bubble = document.createElement('div');
       bubble.className = 'bubble'; bubble.textContent = text;
-      row.appendChild(label); row.appendChild(bubble);
+
+      col.appendChild(label);
+      col.appendChild(bubble);
 
       if (role === 'agent' && meta?.tools_called?.length) {
         const chips = document.createElement('div');
         chips.className = 'tool-chips';
         for (const t of meta.tools_called) {
           const chip = document.createElement('span');
-          chip.className = 'chip ' + (
-            t.name === 'detect_banking_intent' ? 'intent' :
-            t.name === 'get_fake_identity'     ? 'identity' :
-            t.name === 'generate_character'    ? 'character' : 'other'
-          );
+          chip.className = 'chip ' + chipClass(t.name);
           chip.textContent = '⚙ ' + t.name;
           chips.appendChild(chip);
         }
-        row.appendChild(chips);
+        col.appendChild(chips);
       }
       if (role === 'agent' && meta?.characters_created?.length) {
         const chips = document.createElement('div');
@@ -478,11 +855,51 @@
           chip.textContent = `🎭 ${c.role}: ${c.name}`;
           chips.appendChild(chip);
         }
-        row.appendChild(chips);
+        col.appendChild(chips);
       }
+
+      // "Send by Mail" chip — shown when an inbox mail context is associated
+      if (role === 'agent' && meta?.mail_context) {
+        const chips = document.createElement('div');
+        chips.className = 'tool-chips';
+        const chip = document.createElement('span');
+        chip.className = 'send-mail-chip';
+        chip.textContent = '✉ Send by Mail';
+        chip.addEventListener('click', async () => {
+          if (chip.classList.contains('sent')) return;
+          chip.textContent = '⏳ Sending…';
+          const res = await sendMailReply(text, meta.mail_context);
+          if (res.ok) {
+            chip.textContent = '✓ Sent';
+            chip.classList.add('sent');
+          } else {
+            chip.textContent = '✗ Failed — ' + (res.detail || 'error');
+            chip.style.color = 'var(--scam)';
+          }
+        });
+        chips.appendChild(chip);
+        col.appendChild(chips);
+      }
+
+      row.appendChild(avatar);
+      row.appendChild(col);
       chatWindow.appendChild(row);
       chatWindow.scrollTop = chatWindow.scrollHeight;
     }
+
+    let typingRow = null;
+    function showTyping() {
+      if (chatWindow.querySelector('.empty-state')) chatWindow.innerHTML = '';
+      typingRow = document.createElement('div');
+      typingRow.className = 'bubble-row agent';
+      typingRow.innerHTML =
+        '<div class="avatar">🤖</div>' +
+        '<div class="bubble-col"><div class="bubble-label">Agent</div>' +
+        '<div class="bubble"><span class="typing"><span></span><span></span><span></span></span></div></div>';
+      chatWindow.appendChild(typingRow);
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+    function hideTyping() { if (typingRow) { typingRow.remove(); typingRow = null; } }
 
     function renderPersonas(personas) {
       personasPanel.innerHTML = '';
@@ -490,16 +907,20 @@
       for (const p of personas) {
         const card = document.createElement('div');
         card.className = 'persona-card' + (p.role === 'victim' ? ' victim' : '');
-        card.innerHTML = `<span class="p-role">${p.role || 'persona'}</span> ${p.name || '(unnamed)'}`;
+        const initials = (p.name || '?').split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase();
+        card.innerHTML = `<span class="p-avatar">${initials}</span><span class="p-role">${p.role || 'persona'}</span> ${p.name || '(unnamed)'}`;
         personasPanel.appendChild(card);
       }
       personasPanel.classList.add('visible');
     }
 
-    function setStatus(msg, error = false) { statusBar.textContent = msg; statusBar.style.color = error ? '#f87171' : '#4a5568'; }
+    function setStatus(msg, error = false) {
+      statusBar.textContent = msg;
+      statusBar.classList.toggle('error', !!error);
+    }
     function setBusy(busy) {
       sendBtn.disabled = busy; processBtn.disabled = busy;
-      sendBtn.innerHTML = busy ? '<span class="spinner"></span>Thinking…' : 'Send to Agent';
+      sendBtn.innerHTML = busy ? '<span class="spinner"></span> Thinking…' : 'Send';
     }
 
     // ── Threads sidebar ──
@@ -512,13 +933,15 @@
           const item = document.createElement('div');
           item.className = 'thread-item' + (t.id === currentThreadId ? ' active' : '');
           item.innerHTML =
-            `<div class="t-subject">${t.subject || '(no subject)'}</div>` +
-            `<div class="t-meta"><span class="t-mode ${t.identity_mode}">${t.identity_mode}</span> · ${t.message_count} msg</div>`;
+            `<div class="t-subject">${escapeHtml(t.subject || '(no subject)')}</div>` +
+            `<div class="t-meta"><span class="t-mode ${t.identity_mode}">${t.identity_mode}</span> ${t.message_count} msg</div>`;
           item.addEventListener('click', () => loadThread(t.id));
           threadList.appendChild(item);
         }
       } catch (_) {}
     }
+
+    function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
     async function loadThread(id) {
       try {
@@ -530,15 +953,16 @@
         for (const m of data.messages) {
           appendBubble(m.direction === 'incoming' ? 'scammer' : 'agent', m.body);
         }
+        showEmptyIfNeeded();
         renderPersonas(data.personas);
         refreshThreads();
-        setStatus(`Loaded thread #${id} (${data.messages.length} messages)`);
+        setStatus(`Loaded thread #${id} · ${data.messages.length} messages`);
       } catch (e) { setStatus('Could not load thread: ' + e.message, true); }
     }
 
     newThreadBtn.addEventListener('click', () => {
       currentThreadId = null;
-      chatWindow.innerHTML = '';
+      chatWindow.innerHTML = EMPTY_HTML;
       renderPersonas([]);
       refreshThreads();
       setStatus('New thread — send a message to begin.');
@@ -564,6 +988,7 @@
       if (provider === 'ollama' && settings.ollama_url) body.ollama_url = settings.ollama_url;
 
       appendBubble('scammer', text);
+      showTyping();
       setBusy(true);
       setStatus('Agent is thinking…');
 
@@ -575,17 +1000,18 @@
         return res.json();
       })
       .then(data => {
+        hideTyping();
         currentThreadId = data.thread_id;
-        appendBubble('agent', data.reply, data);
+        appendBubble('agent', data.reply, { ...data, mail_context: currentInboxMail });
+        currentInboxMail = null;
         if (data.primary_persona) renderPersonas([data.primary_persona]);
-        // refresh personas fully (side characters may have been added)
         fetch('/threads/' + data.thread_id).then(r => r.json()).then(d => renderPersonas(d.personas)).catch(()=>{});
         refreshThreads();
         const modelLabel = cfg.model_labels[data.model] || data.model;
         const extra = data.characters_created?.length ? ` · +${data.characters_created.length} character(s)` : '';
         setStatus(`${data.provider} / ${modelLabel} · ${data.tools_called.length} tool(s)${extra}`);
       })
-      .catch(e => setStatus('Error: ' + e.message, true))
+      .catch(e => { hideTyping(); setStatus('Error: ' + e.message, true); })
       .finally(() => setBusy(false));
     }
 
@@ -596,7 +1022,6 @@
       pendingSend = text;
 
       const mode = settings.identity_mode || cfg.default_identity_mode;
-      // Ask only when starting a NEW thread in ask mode
       if (currentThreadId === null && mode === 'ask') {
         askOverlay.classList.add('open');
       } else {
@@ -617,8 +1042,9 @@
         const data = await res.json();
         if (data.error) throw new Error(data.error);
         const count = data.processed?.length ?? 0;
-        setStatus(`Processed ${count} email(s) from Gmail.`);
+        setStatus(`Processed ${count} email(s) from inbox.`);
         refreshThreads();
+        refreshInbox();
       } catch (e) { setStatus('Gmail error: ' + e.message, true); }
       finally { setBusy(false); }
     });
@@ -627,6 +1053,362 @@
     loadSettings();
     loadConfig();
     refreshThreads();
+    showEmptyIfNeeded();
+
+    // Deep-link: ?thread=N opens that thread on load
+    const _tp = new URLSearchParams(location.search).get('thread');
+    if (_tp) loadThread(parseInt(_tp, 10));
+
+    // ── Inbox panel ──────────────────────────────────────────────────────────
+    const inboxPanel      = document.getElementById('inbox-panel');
+    const inboxList       = document.getElementById('inbox-list');
+    const inboxPreview    = document.getElementById('inbox-preview');
+    const previewHeader   = document.getElementById('preview-header');
+    const previewBody     = document.getElementById('preview-body');
+    const inboxBaitBtn    = document.getElementById('inbox-bait-btn');
+    const inboxSendBtn    = document.getElementById('inbox-send-mail-btn');
+    const inboxBadge      = document.getElementById('inbox-badge');
+    const inboxToggleBtn  = document.getElementById('inbox-toggle-btn');
+    const inboxRefreshBtn = document.getElementById('inbox-refresh-btn');
+
+    let inboxMails = [];
+    let activeInboxIdx = -1;
+    let lastAgentReply = null;  // {text, mail_context} — kept for the preview Send button
+
+    function inboxIsOpen() { return inboxPanel.classList.contains('open'); }
+
+    inboxToggleBtn.addEventListener('click', () => {
+      inboxPanel.classList.toggle('open');
+      if (inboxIsOpen() && inboxMails.length === 0) refreshInbox();
+    });
+
+    inboxRefreshBtn.addEventListener('click', refreshInbox);
+
+    async function refreshInbox() {
+      inboxRefreshBtn.textContent = '↻ …';
+      try {
+        const res = await fetch('/mail/inbox');
+        if (!res.ok) {
+          const e = await res.json();
+          inboxList.innerHTML = `<span class="field-hint" style="color:var(--scam)">${e.detail || 'Failed to load inbox'}</span>`;
+          return;
+        }
+        inboxMails = await res.json();
+        renderInboxList();
+        // update badge
+        if (inboxMails.length) {
+          inboxBadge.textContent = inboxMails.length;
+          inboxBadge.style.display = 'flex';
+        } else {
+          inboxBadge.style.display = 'none';
+        }
+      } catch (e) {
+        inboxList.innerHTML = `<span class="field-hint" style="color:var(--scam)">Error: ${e.message}</span>`;
+      } finally {
+        inboxRefreshBtn.textContent = '↻ Refresh';
+      }
+    }
+
+    function renderInboxList() {
+      inboxList.innerHTML = '';
+      if (!inboxMails.length) {
+        inboxList.innerHTML = '<span class="field-hint" style="text-align:center;margin-top:20px;display:block;">No unread messages</span>';
+        inboxPreview.classList.remove('visible');
+        return;
+      }
+      inboxMails.forEach((m, i) => {
+        const item = document.createElement('div');
+        item.className = 'inbox-item' + (i === activeInboxIdx ? ' active' : '');
+        const from = m.from_address || '(unknown)';
+        const snippet = (m.mail_body || '').replace(/\n+/g, ' ').trim().slice(0, 100);
+        item.innerHTML =
+          `<div class="i-from">${escapeHtml(from)}</div>` +
+          `<div class="i-subject">${escapeHtml(m.subject || '(no subject)')}</div>` +
+          `<div class="i-snippet">${escapeHtml(snippet)}</div>`;
+        item.addEventListener('click', () => selectInboxMail(i));
+        inboxList.appendChild(item);
+      });
+    }
+
+    function selectInboxMail(idx) {
+      activeInboxIdx = idx;
+      const m = inboxMails[idx];
+      // Update active highlight
+      inboxList.querySelectorAll('.inbox-item').forEach((el, i) => el.classList.toggle('active', i === idx));
+      // Show preview
+      previewHeader.innerHTML =
+        `<strong>From:</strong> ${escapeHtml(m.from_address || '')}<br>` +
+        `<strong>Subject:</strong> ${escapeHtml(m.subject || '')}`;
+      previewBody.textContent = m.mail_body || '';
+      inboxSendBtn.disabled = true;
+      inboxSendBtn.textContent = '✉ Send by Mail';
+      inboxPreview.classList.add('visible');
+      lastAgentReply = null;
+    }
+
+    // "Bait in Chat" — load the inbox mail into the chat as a scammer message and run the agent
+    inboxBaitBtn.addEventListener('click', () => {
+      if (activeInboxIdx < 0) return;
+      const m = inboxMails[activeInboxIdx];
+      currentInboxMail = m;   // attach to next agent reply
+      // Set as pending send
+      messageInput.value = m.mail_body || '';
+      // Resolve identity mode and send
+      const mode = settings.identity_mode || cfg.default_identity_mode;
+      pendingSend = m.mail_body || '';
+      if (currentThreadId === null && mode === 'ask') {
+        askOverlay.classList.add('open');
+      } else {
+        doSend(mode === 'ask' ? 'fake' : mode);
+      }
+      messageInput.value = '';
+      // Enable the Send button once agent replies — handled in appendBubble / doSend callback
+      // We listen via a MutationObserver on chatWindow for a new agent bubble
+      waitForAgentReplyAndEnableSend(m);
+    });
+
+    function waitForAgentReplyAndEnableSend(mailContext) {
+      const obs = new MutationObserver(() => {
+        const agentBubbles = chatWindow.querySelectorAll('.bubble-row.agent .bubble');
+        if (agentBubbles.length) {
+          const lastText = agentBubbles[agentBubbles.length - 1].textContent;
+          lastAgentReply = { text: lastText, mail_context: mailContext };
+          inboxSendBtn.disabled = false;
+          inboxSendBtn.textContent = '✉ Send by Mail';
+          obs.disconnect();
+        }
+      });
+      obs.observe(chatWindow, { childList: true, subtree: true });
+      // Auto-disconnect after 120s safety
+      setTimeout(() => obs.disconnect(), 120000);
+    }
+
+    // "Send by Mail" in the preview panel — sends the last agent reply to this scammer
+    inboxSendBtn.addEventListener('click', async () => {
+      if (!lastAgentReply) return;
+      inboxSendBtn.disabled = true;
+      inboxSendBtn.textContent = '⏳ Sending…';
+      const res = await sendMailReply(lastAgentReply.text, lastAgentReply.mail_context);
+      if (res.ok) {
+        inboxSendBtn.textContent = '✓ Sent';
+        // Remove from inbox list
+        inboxMails.splice(activeInboxIdx, 1);
+        activeInboxIdx = -1;
+        lastAgentReply = null;
+        renderInboxList();
+        if (inboxMails.length) { inboxBadge.textContent = inboxMails.length; }
+        else { inboxBadge.style.display = 'none'; }
+        inboxPreview.classList.remove('visible');
+      } else {
+        inboxSendBtn.textContent = '✗ Failed';
+        inboxSendBtn.disabled = false;
+        setStatus('Send failed: ' + (res.detail || 'unknown error'), true);
+      }
+    });
+
+    async function sendMailReply(replyText, mailContext) {
+      if (!mailContext) return { ok: false, detail: 'No mail context' };
+      try {
+        const body = {
+          reply_text: replyText,
+          from_address: mailContext.from_address,
+          to_address: mailContext.to_address || '',
+          subject: mailContext.subject || '',
+          thread_id: mailContext.thread_id || '',
+          msg_id: mailContext.msg_id || '',
+          uid: mailContext.uid || '',
+          folder: mailContext.folder || 'INBOX',
+          mark_read: true,
+        };
+        const res = await fetch('/mail/send', {
+          method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body),
+        });
+        if (!res.ok) { const e = await res.json(); return { ok: false, detail: e.detail }; }
+        return await res.json();
+      } catch (e) {
+        return { ok: false, detail: e.message };
+      }
+    }
+
+    // ── Mail connections ──
+    const mailBtn      = document.getElementById('mail-btn');
+    const mailOverlay  = document.getElementById('mail-overlay');
+    const mailClose    = document.getElementById('mail-close');
+    const mailStatus   = document.getElementById('mail-status');
+    const mailList     = document.getElementById('mail-accounts-list');
+    const presetSelect = document.getElementById('preset-select');
+    const presetNote   = document.getElementById('preset-note');
+    const imapFields   = document.getElementById('imap-fields');
+    const methodTabs   = document.querySelectorAll('#mail-method-tabs .tab');
+    let presets = [];
+
+    function setMailStatus(msg, error) {
+      mailStatus.textContent = msg || '';
+      mailStatus.classList.toggle('error', !!error);
+    }
+
+    async function openMailModal() {
+      document.getElementById('enc-warning').style.display = cfg.encryption_configured ? 'none' : 'block';
+      await loadPresets();
+      await loadMailAccounts();
+      selectMailMethod('preset');
+      mailOverlay.classList.add('open');
+    }
+    mailBtn.addEventListener('click', openMailModal);
+    mailClose.addEventListener('click', () => mailOverlay.classList.remove('open'));
+    mailOverlay.addEventListener('click', e => { if (e.target === mailOverlay) mailOverlay.classList.remove('open'); });
+
+    async function loadPresets() {
+      if (presets.length) return;
+      try {
+        presets = await (await fetch('/mail/presets')).json();
+        presetSelect.innerHTML = '';
+        for (const p of presets) {
+          const o = document.createElement('option'); o.value = p.key; o.textContent = p.label; presetSelect.appendChild(o);
+        }
+        applyPreset();
+      } catch (e) { setMailStatus('Failed to load presets: ' + e.message, true); }
+    }
+
+    function currentPreset() { return presets.find(p => p.key === presetSelect.value); }
+
+    function applyPreset() {
+      const p = currentPreset();
+      if (!p) return;
+      presetNote.textContent = p.notes || '';
+      if (p.provider_type === 'gmail_oauth' || p.provider_type === 'microsoft_oauth') {
+        // OAuth preset → send them to SSO
+        imapFields.style.display = 'none';
+        presetNote.textContent = (p.notes || '') + '  → Use the SSO tab to connect.';
+        return;
+      }
+      imapFields.style.display = 'flex';
+      document.getElementById('mail-imap-host').value = p.imap_host || '';
+      document.getElementById('mail-imap-port').value = p.imap_port || 993;
+      document.getElementById('mail-smtp-host').value = p.smtp_host || '';
+      document.getElementById('mail-smtp-port').value = p.smtp_port || 465;
+      document.getElementById('mail-ssl').checked = p.use_ssl !== false;
+      document.getElementById('mail-starttls').checked = !!p.starttls;
+      document.getElementById('mail-auth-note').textContent =
+        p.auth === 'app_password' ? 'This provider requires an App Password.' : '';
+    }
+    presetSelect.addEventListener('change', applyPreset);
+
+    function selectMailMethod(method) {
+      methodTabs.forEach(t => t.classList.toggle('active', t.dataset.method === method));
+      document.getElementById('method-preset').style.display = method === 'preset' ? 'block' : 'none';
+      document.getElementById('method-sso').style.display = method === 'sso' ? 'block' : 'none';
+      // IMAP fields show for preset (non-oauth) and custom
+      if (method === 'sso') { imapFields.style.display = 'none'; }
+      else if (method === 'preset') { applyPreset(); }
+      else { // custom
+        imapFields.style.display = 'flex';
+        document.getElementById('mail-imap-host').value = '';
+        document.getElementById('mail-smtp-host').value = '';
+        document.getElementById('mail-auth-note').textContent = '';
+      }
+    }
+    methodTabs.forEach(t => t.addEventListener('click', () => selectMailMethod(t.dataset.method)));
+
+    async function loadMailAccounts() {
+      try {
+        const accts = await (await fetch('/mail/accounts')).json();
+        mailList.innerHTML = accts.length ? '' : '<span class="field-hint">No accounts yet.</span>';
+        for (const a of accts) {
+          const row = document.createElement('div');
+          row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--bg-1);border:1px solid var(--border);border-radius:9px;padding:8px 11px;';
+          const active = a.is_active ? '<span class="t-mode fake" style="margin-left:6px;">active</span>' : '';
+          row.innerHTML =
+            `<div style="min-width:0;"><div style="font-size:0.82rem;color:var(--ink-0);font-weight:500;">${escapeHtml(a.label)}${active}</div>` +
+            `<div style="font-size:0.68rem;color:var(--ink-2);">${escapeHtml(a.email_address)} · ${a.provider_type}</div></div>`;
+          const btns = document.createElement('div');
+          btns.style.cssText = 'display:flex;gap:5px;flex-shrink:0;';
+          btns.innerHTML =
+            `<button class="btn" data-act="test" style="padding:5px 10px;font-size:0.72rem;">Test</button>` +
+            (a.is_active ? '' : `<button class="btn" data-act="activate" style="padding:5px 10px;font-size:0.72rem;">Activate</button>`) +
+            `<button class="btn" data-act="delete" style="padding:5px 10px;font-size:0.72rem;background:var(--scam-bg);color:var(--scam);border:1px solid var(--scam-border);">✕</button>`;
+          btns.querySelector('[data-act="test"]').addEventListener('click', () => testMailAccount(a.id));
+          btns.querySelector('[data-act="activate"]')?.addEventListener('click', () => activateMailAccount(a.id));
+          btns.querySelector('[data-act="delete"]').addEventListener('click', () => deleteMailAccount(a.id));
+          row.appendChild(btns);
+          mailList.appendChild(row);
+        }
+      } catch (e) { setMailStatus('Failed to load accounts: ' + e.message, true); }
+    }
+
+    document.getElementById('mail-save-btn').addEventListener('click', async () => {
+      const method = document.querySelector('#mail-method-tabs .tab.active')?.dataset.method;
+      const body = {
+        email_address: document.getElementById('mail-email').value.trim(),
+        imap_host: document.getElementById('mail-imap-host').value.trim(),
+        imap_port: parseInt(document.getElementById('mail-imap-port').value, 10) || null,
+        smtp_host: document.getElementById('mail-smtp-host').value.trim(),
+        smtp_port: parseInt(document.getElementById('mail-smtp-port').value, 10) || null,
+        use_ssl: document.getElementById('mail-ssl').checked,
+        starttls: document.getElementById('mail-starttls').checked,
+        username: document.getElementById('mail-username').value.trim() || null,
+        secret: document.getElementById('mail-secret').value,
+        provider_type: 'imap_smtp',
+      };
+      if (method === 'preset') {
+        const p = currentPreset();
+        body.preset = p?.key;
+        body.auth_kind = p?.auth === 'app_password' ? 'app_password' : 'password';
+        body.label = p?.label;
+      }
+      if (!body.email_address) { setMailStatus('Email address is required.', true); return; }
+      setMailStatus('Saving & testing…');
+      try {
+        const res = await fetch('/mail/accounts', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+        if (!res.ok) { const e = await res.json(); throw new Error(e.detail || res.statusText); }
+        const acct = await res.json();
+        document.getElementById('mail-secret').value = '';
+        await loadMailAccounts();
+        // auto-test the new account
+        const t = await (await fetch(`/mail/accounts/${acct.id}/test`, {method:'POST'})).json();
+        setMailStatus(t.ok ? `✓ Added & connected: ${acct.email_address}` : `Added, but test failed: ${t.detail}`, !t.ok);
+      } catch (e) { setMailStatus('Error: ' + e.message, true); }
+    });
+
+    async function testMailAccount(id) {
+      setMailStatus('Testing…');
+      try {
+        const t = await (await fetch(`/mail/accounts/${id}/test`, {method:'POST'})).json();
+        setMailStatus(t.ok ? `✓ ${t.detail}` : `✗ ${t.detail}`, !t.ok);
+      } catch (e) { setMailStatus('Test error: ' + e.message, true); }
+    }
+    async function activateMailAccount(id) {
+      await fetch(`/mail/accounts/${id}/activate`, {method:'POST'});
+      await loadMailAccounts();
+      loadConfig();
+      setMailStatus('Account activated.');
+    }
+    async function deleteMailAccount(id) {
+      await fetch(`/mail/accounts/${id}`, {method:'DELETE'});
+      await loadMailAccounts();
+      loadConfig();
+      setMailStatus('Account deleted.');
+    }
+
+    async function startOAuth(provider) {
+      setMailStatus(`Starting ${provider} sign-in…`);
+      try {
+        const res = await fetch(`/mail/oauth/start?provider=${provider}&label=${encodeURIComponent(provider)}`);
+        if (!res.ok) { const e = await res.json(); throw new Error(e.detail || res.statusText); }
+        const data = await res.json();
+        if (data.auth_url) {
+          window.open(data.auth_url, '_blank', 'width=520,height=680');
+          setMailStatus('Complete sign-in in the popup, then reopen this menu.');
+        } else if (data.ok) {
+          await loadMailAccounts(); loadConfig();
+          setMailStatus(`✓ Connected: ${data.account?.email_address || provider}`);
+        }
+      } catch (e) { setMailStatus('OAuth error: ' + e.message, true); }
+    }
+    document.getElementById('sso-gmail').addEventListener('click', () => startOAuth('gmail'));
+    document.getElementById('sso-microsoft').addEventListener('click', () => startOAuth('microsoft'));
+
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') mailOverlay.classList.remove('open'); });
   </script>
 </body>
 </html>
